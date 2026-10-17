@@ -56,12 +56,29 @@
       z-index: 10;
     }
 
-    .wood-card h1 {
+    /* Carved Wooden Text Style for YEADUL */
+    .wood-carved-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 24px;
-      letter-spacing: 2px;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: #532c16;
+      text-transform: uppercase;
+      text-shadow: 
+        1px 1px 0px rgba(255, 230, 180, 0.4),
+        -1px -1px 2px rgba(0, 0, 0, 0.9),
+        2px 2px 3px rgba(0, 0, 0, 0.8),
+        inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6));
+    }
+
+    .sub-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      letter-spacing: 3px;
       color: #ffdda1;
-      text-shadow: 2px 2px 4px #1a0c02;
+      text-shadow: 1px 1px 3px #1a0c02;
       margin-bottom: 20px;
     }
 
@@ -286,22 +303,33 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(22, 10, 48, 0.85);
-      padding: 5px 10px;
+      background: rgba(22, 10, 48, 0.9);
+      padding: 6px 12px;
       border-radius: 20px;
       border: 1px solid #a855f7;
     }
 
-    .icon-btn {
-      background: transparent;
+    .mic-btn {
+      background: #10b981;
       border: none;
-      font-size: 18px;
+      font-size: 11px;
+      font-weight: 700;
       cursor: pointer;
-      color: #00f0ff;
+      color: #fff;
+      padding: 4px 9px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+
+    .mic-btn.muted {
+      background: #ef4444;
     }
 
     .vol-slider {
-      width: 55px;
+      width: 50px;
       accent-color: #a855f7;
       cursor: pointer;
     }
@@ -492,7 +520,9 @@
   <!-- ================= 1. MAIN MENU ================= -->
   <div id="main-menu" class="screen">
     <div class="wood-card">
-      <h1>TIC TAC TOE</h1>
+      <div class="wood-carved-title">YD GAMING</div>
+      <div class="sub-title">TIC TAC TOE</div>
+
       <button class="wood-btn" onclick="openCreateModal()">Create Room</button>
       <div style="margin: 8px 0; font-weight: bold; color: #d2a679; font-size: 13px;">OR</div>
       <button class="wood-btn" onclick="openJoinModal()">Join Room</button>
@@ -558,7 +588,9 @@
   <div id="game-screen" class="screen">
     <div class="game-top-bar">
       <div class="voice-controls">
-        <button class="icon-btn" id="mic-toggle-btn" onclick="toggleMic()">🎙️</button>
+        <button class="mic-btn" id="mic-toggle-btn" onclick="toggleMic()">
+          <span>🎙️</span> <span id="mic-label">MIC ON</span>
+        </button>
         <span style="font-size:9px; color:#a855f7;">VOL</span>
         <input type="range" class="vol-slider" min="0" max="1" step="0.1" value="1" oninput="setPeerVolume(this.value)" />
       </div>
@@ -676,12 +708,34 @@
     }
 
     function toggleMic() {
-      if (!localStream) return;
-      isMicMuted = !isMicMuted;
-      localStream.getAudioTracks().forEach(track => track.enabled = !isMicMuted);
       const btn = document.getElementById('mic-toggle-btn');
-      btn.innerText = isMicMuted ? '🔇' : '🎙️';
-      btn.style.color = isMicMuted ? '#ef4444' : '#00f0ff';
+      const label = document.getElementById('mic-label');
+
+      if (!localStream) {
+        initMicrophone().then(stream => {
+          if (stream) {
+            isMicMuted = false;
+            btn.className = "mic-btn";
+            label.innerText = "MIC ON";
+          } else {
+            alert("Microphone permission denied or device not found.");
+          }
+        });
+        return;
+      }
+
+      isMicMuted = !isMicMuted;
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !isMicMuted;
+      });
+
+      if (isMicMuted) {
+        btn.className = "mic-btn muted";
+        label.innerText = "MIC OFF";
+      } else {
+        btn.className = "mic-btn";
+        label.innerText = "MIC ON";
+      }
     }
 
     function setPeerVolume(val) {
