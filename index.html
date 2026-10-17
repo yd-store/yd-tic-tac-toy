@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cyber Tic Tac Toe - FF Style Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>YEADUL - Ultimate 1v1 Battle Arena</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
-  
+
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
     body {
@@ -29,7 +31,7 @@
     .screen {
       width: 100vw;
       min-height: 100vh;
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
@@ -37,8 +39,87 @@
       position: relative;
     }
 
-    /* ---------------- 1. MAIN MENU & MODALS ---------------- */
-    #main-menu {
+    /* ---------------- 0. MAIN SELECTOR SCREEN ---------------- */
+    #select-game-screen {
+      display: flex;
+      background: radial-gradient(circle, rgba(45,26,14,0.7) 0%, rgba(15,8,4,0.95) 100%),
+                  url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    }
+
+    .wood-carved-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      color: #532c16;
+      text-transform: uppercase;
+      text-shadow: 
+        1px 1px 0px rgba(255, 230, 180, 0.4),
+        -1px -1px 2px rgba(0, 0, 0, 0.9),
+        2px 2px 3px rgba(0, 0, 0, 0.8),
+        inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6));
+    }
+
+    .sub-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: #ffdda1;
+      text-shadow: 1px 1px 3px #1a0c02;
+      margin-bottom: 15px;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 70vh;
+      overflow-y: auto;
+      padding: 5px;
+    }
+
+    .game-choice-card {
+      background: linear-gradient(145deg, #5c3822, #3e2213);
+      border: 2px solid #8d5b37;
+      border-radius: 14px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 5px 12px rgba(0,0,0,0.6);
+      transition: transform 0.15s, border-color 0.2s;
+    }
+
+    .game-choice-card:hover {
+      transform: translateY(-2px);
+      border-color: #00f0ff;
+    }
+
+    .game-choice-card:active {
+      transform: scale(0.96);
+    }
+
+    .game-choice-icon {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .game-choice-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      color: #ffeedb;
+      text-align: center;
+    }
+
+    /* ---------------- 1. ROOM CREATE & JOIN ---------------- */
+    #menu-screen {
       background: radial-gradient(circle, rgba(45,26,14,0.7) 0%, rgba(15,8,4,0.95) 100%),
                   url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
     }
@@ -56,36 +137,10 @@
       z-index: 10;
     }
 
-    /* Carved Wooden Text Style for YEADUL */
-    .wood-carved-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 34px;
-      font-weight: 900;
-      letter-spacing: 5px;
-      color: #532c16;
-      text-transform: uppercase;
-      text-shadow: 
-        1px 1px 0px rgba(255, 230, 180, 0.4),
-        -1px -1px 2px rgba(0, 0, 0, 0.9),
-        2px 2px 3px rgba(0, 0, 0, 0.8),
-        inset 0 1px 3px rgba(0, 0, 0, 0.8);
-      margin-bottom: 2px;
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6));
-    }
-
-    .sub-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      letter-spacing: 3px;
-      color: #ffdda1;
-      text-shadow: 1px 1px 3px #1a0c02;
-      margin-bottom: 20px;
-    }
-
     .wood-btn {
       width: 100%;
       padding: 12px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       color: #fff;
       background: linear-gradient(180deg, #b86b32, #7a3e12);
@@ -95,9 +150,8 @@
       text-transform: uppercase;
       letter-spacing: 1px;
       box-shadow: 0 4px 0 #4a2408;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      transition: transform 0.1s ease;
       margin-bottom: 12px;
-      user-select: none;
     }
 
     .wood-btn:hover { background: linear-gradient(180deg, #cf7d3d, #8f4b18); }
@@ -131,12 +185,9 @@
       padding: 15px;
     }
 
-    /* ---------------- 2. ROOM LOBBY ---------------- */
+    /* ---------------- 2. FF CUSTOM ROOM LOBBY ---------------- */
     #room-lobby-screen {
-      display: none;
       background: radial-gradient(circle at center, #1b0f38 0%, #08031a 90%);
-      flex-direction: column;
-      align-items: center;
     }
 
     .room-header {
@@ -152,7 +203,7 @@
 
     .room-header h2 {
       font-family: 'Orbitron', sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       color: #ff007f;
       letter-spacing: 1.5px;
     }
@@ -264,29 +315,10 @@
       box-shadow: none;
     }
 
-    /* ---------------- 3. IN-GAME SCREEN ---------------- */
+    /* ---------------- 3. IN-GAME ARENA ---------------- */
     #game-screen {
-      display: none;
       background: radial-gradient(circle at center, #180d38 0%, #060214 80%);
-      flex-direction: column;
-      align-items: center;
       padding: 10px;
-    }
-
-    #game-screen::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 35%;
-      background: linear-gradient(rgba(147, 51, 234, 0.15) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(147, 51, 234, 0.15) 1px, transparent 1px);
-      background-size: 30px 30px;
-      transform: perspective(300px) rotateX(60deg);
-      pointer-events: none !important;
-      z-index: 0;
-      opacity: 0.5;
     }
 
     .game-top-bar {
@@ -294,8 +326,8 @@
       justify-content: space-between;
       align-items: center;
       width: 100%;
-      max-width: 360px;
-      margin-bottom: 10px;
+      max-width: 380px;
+      margin-bottom: 6px;
       z-index: 10;
     }
 
@@ -304,7 +336,7 @@
       align-items: center;
       gap: 8px;
       background: rgba(22, 10, 48, 0.9);
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 20px;
       border: 1px solid #a855f7;
     }
@@ -321,26 +353,18 @@
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: background 0.2s;
     }
 
-    .mic-btn.muted {
-      background: #ef4444;
-    }
-
-    .vol-slider {
-      width: 50px;
-      accent-color: #a855f7;
-      cursor: pointer;
-    }
+    .mic-btn.muted { background: #ef4444; }
+    .vol-slider { width: 50px; accent-color: #a855f7; cursor: pointer; }
 
     .score-board {
       display: flex;
       align-items: center;
       justify-content: space-around;
       width: 100%;
-      max-width: 360px;
-      margin-bottom: 12px;
+      max-width: 380px;
+      margin-bottom: 6px;
       z-index: 10;
     }
 
@@ -350,116 +374,144 @@
       align-items: center;
       background: rgba(19, 7, 43, 0.85);
       border: 2px solid transparent;
-      padding: 8px 14px;
-      border-radius: 12px;
-      min-width: 110px;
-      transition: all 0.2s;
+      padding: 4px 12px;
+      border-radius: 10px;
+      min-width: 100px;
     }
 
-    .score-card.active-turn {
-      border-color: #fff;
-      box-shadow: 0 0 15px #fff;
-      transform: scale(1.04);
-    }
-
+    .score-card.active-turn { border-color: #fff; box-shadow: 0 0 12px #fff; }
     .score-card.x-side { border-color: #00f0ff; }
     .score-card.o-side { border-color: #ff0055; }
-
-    .p-name {
-      font-size: 11px;
-      font-weight: 700;
-      color: #cbd5e1;
-      max-width: 85px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .p-score {
-      font-family: 'Orbitron', monospace;
-      font-size: 24px;
-      font-weight: 900;
-      margin-top: 2px;
-    }
-
+    .p-name { font-size: 11px; font-weight: 700; color: #cbd5e1; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .p-score { font-family: 'Orbitron', monospace; font-size: 20px; font-weight: 900; }
     .x-color { color: #00f0ff; text-shadow: 0 0 8px #00f0ff; }
     .o-color { color: #ff0055; text-shadow: 0 0 8px #ff0055; }
 
-    .board-container {
+    .game-viewport {
+      width: 100%;
+      max-width: 380px;
+      height: 280px;
+      background: rgba(16, 5, 36, 0.95);
+      border: 2.5px solid #b026ff;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(176, 38, 255, 0.4);
       position: relative;
-      padding: 8px;
-      background: rgba(16, 5, 36, 0.9);
-      border: 3px solid #b026ff;
-      border-radius: 20px;
-      box-shadow: 0 0 20px rgba(176, 38, 255, 0.5);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       z-index: 10;
     }
 
-    .board {
-      display: grid;
-      grid-template-columns: repeat(3, 80px);
-      grid-template-rows: repeat(3, 80px);
-      gap: 8px;
-    }
+    canvas { width: 100%; height: 100%; display: block; }
 
+    /* Sub-game Specific UI */
+    .tictac-board {
+      display: grid;
+      grid-template-columns: repeat(3, 75px);
+      grid-template-rows: repeat(3, 75px);
+      gap: 6px;
+    }
     .cell {
-      border-radius: 12px;
+      border-radius: 10px;
       background: rgba(25, 12, 54, 0.9);
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Orbitron', sans-serif;
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 900;
       cursor: pointer;
-      user-select: none;
       border: 1px solid rgba(176, 38, 255, 0.3);
-      position: relative;
-      z-index: 12;
     }
+    .cell.x { color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
+    .cell.o { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
-    .cell:hover { background: rgba(55, 22, 115, 0.9); }
-    .cell:active { background: rgba(70, 30, 140, 0.95); }
-    .cell.x { color: #00f0ff; text-shadow: 0 0 12px #00f0ff; }
-    .cell.o { color: #ff0055; text-shadow: 0 0 12px #ff0055; }
-
-    .cell.winning-cell {
-      background: rgba(255, 255, 255, 0.25) !important;
-      animation: pulseWin 0.6s infinite alternate;
+    .rps-container { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+    .rps-options { display: flex; gap: 12px; }
+    .rps-btn {
+      width: 65px; height: 65px; border-radius: 16px; background: rgba(30, 10, 65, 0.9);
+      border: 2px solid #a855f7; font-size: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer;
     }
+    .rps-btn:active { border-color: #00f0ff; transform: scale(1.08); }
 
-    @keyframes pulseWin {
-      0% { transform: scale(0.96); box-shadow: 0 0 8px #fff; }
-      100% { transform: scale(1.04); box-shadow: 0 0 20px #00f0ff, 0 0 30px #ff0055; }
+    /* Connect 4 Board */
+    .c4-board {
+      display: grid;
+      grid-template-columns: repeat(7, 34px);
+      grid-template-rows: repeat(6, 34px);
+      gap: 4px;
+      background: #1e0a45;
+      padding: 6px;
+      border-radius: 12px;
+      border: 2px solid #a855f7;
     }
+    .c4-cell {
+      width: 34px; height: 34px; border-radius: 50%; background: #0b031c; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
+    .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
 
+    /* Word Search Board */
+    .ws-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 6px;
+    }
+    .ws-word-list {
+      font-size: 11px;
+      color: #38bdf8;
+      font-weight: bold;
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+    }
+    .ws-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 32px);
+      grid-template-rows: repeat(7, 32px);
+      gap: 3px;
+    }
+    .ws-cell {
+      width: 32px; height: 32px; background: rgba(25, 12, 54, 0.9); border: 1px solid #6b21a8;
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 800; cursor: pointer;
+    }
+    .ws-cell.selected { background: #a855f7; color: #fff; }
+    .ws-cell.found-x { background: #00f0ff; color: #000; font-weight: 900; }
+    .ws-cell.found-o { background: #ff0055; color: #fff; font-weight: 900; }
+
+    /* Controls & Info */
     .info-text {
-      margin-top: 10px;
+      margin-top: 6px;
       font-family: 'Orbitron', sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       color: #c084fc;
       letter-spacing: 1px;
       z-index: 10;
       text-align: center;
-      min-height: 20px;
+      min-height: 18px;
     }
 
     .game-bottom-area {
-      margin-top: 10px;
+      margin-top: 6px;
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
       z-index: 10;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .chat-box {
       background: rgba(14, 5, 33, 0.9);
       border: 1.5px solid #a855f7;
       border-radius: 12px;
-      padding: 8px;
-      height: 100px;
+      padding: 5px 8px;
+      height: 75px;
       display: flex;
       flex-direction: column;
     }
@@ -470,39 +522,28 @@
       font-size: 11px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding-right: 4px;
+      gap: 3px;
     }
 
-    .msg {
-      padding: 4px 8px;
-      border-radius: 6px;
-      max-width: 85%;
-      word-break: break-word;
-    }
+    .msg { padding: 3px 6px; border-radius: 6px; max-width: 85%; word-break: break-word; }
     .msg.me { background: rgba(0, 240, 255, 0.2); border: 1px solid #00f0ff; align-self: flex-end; color: #e0faff; }
     .msg.peer { background: rgba(255, 0, 85, 0.2); border: 1px solid #ff0055; align-self: flex-start; color: #ffe4ec; }
 
-    .chat-input-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 5px;
-    }
-
+    .chat-input-row { display: flex; gap: 6px; margin-top: 4px; }
     .chat-input-row input {
       flex: 1;
       background: rgba(30, 10, 65, 0.85);
       border: 1px solid #a855f7;
       border-radius: 6px;
       color: #fff;
-      padding: 6px 8px;
+      padding: 5px 8px;
       font-size: 11px;
       outline: none;
     }
 
     .action-btn {
       width: 100%;
-      padding: 8px;
+      padding: 7px;
       border-radius: 8px;
       border: none;
       font-weight: 700;
@@ -517,19 +558,58 @@
 
   <audio id="remote-audio" autoplay playsinline></audio>
 
-  <!-- ================= 1. MAIN MENU ================= -->
-  <div id="main-menu" class="screen">
-    <div class="wood-card">
-      <div class="wood-carved-title">YD GAMING</div>
-      <div class="sub-title">TIC TAC TOE</div>
+  <!-- ================= 0. MAIN SELECTOR SCREEN ================= -->
+  <div id="select-game-screen" class="screen">
+    <div class="wood-carved-title">YEADUL</div>
+    <div class="sub-title">CHOOSE YOUR ARENA</div>
 
-      <button class="wood-btn" onclick="openCreateModal()">Create Room</button>
-      <div style="margin: 8px 0; font-weight: bold; color: #d2a679; font-size: 13px;">OR</div>
-      <button class="wood-btn" onclick="openJoinModal()">Join Room</button>
+    <div class="game-grid">
+      <div class="game-choice-card" onclick="selectGame('dotsboxes')">
+        <div class="game-choice-icon">🔲</div>
+        <div class="game-choice-name">Dots & Boxes</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('fourinrow')">
+        <div class="game-choice-icon">🔴🟡</div>
+        <div class="game-choice-name">Four in a Row</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('wordsearch')">
+        <div class="game-choice-icon">🔤</div>
+        <div class="game-choice-name">Word Search</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('tictactoe')">
+        <div class="game-choice-icon">❌⭕</div>
+        <div class="game-choice-name">Tic Tac Toe</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('airhockey')">
+        <div class="game-choice-icon">🏒</div>
+        <div class="game-choice-name">Air Hockey</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('angleshoot')">
+        <div class="game-choice-icon">🏹</div>
+        <div class="game-choice-name">Angle Shoot</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('hillclimb')">
+        <div class="game-choice-icon">🏎️</div>
+        <div class="game-choice-name">Hill Climb</div>
+      </div>
+      <div class="game-choice-card" onclick="selectGame('rps')">
+        <div class="game-choice-icon">🪨📄✂️</div>
+        <div class="game-choice-name">Rock Paper Scissors</div>
+      </div>
     </div>
   </div>
 
-  <!-- CREATE ROOM MODAL -->
+  <!-- ================= 1. ROOM CREATE & JOIN MODAL ================= -->
+  <div id="menu-screen" class="screen">
+    <div class="wood-card">
+      <h2 id="chosen-game-title" style="font-family:'Orbitron'; font-size:18px; margin-bottom:15px; color:#ffdda1;">GAME ARENA</h2>
+      <button class="wood-btn" onclick="openCreateModal()">Create Room</button>
+      <div style="margin: 6px 0; font-weight: bold; color: #d2a679; font-size: 12px;">OR</div>
+      <button class="wood-btn" onclick="openJoinModal()">Join Room</button>
+      <button class="wood-btn" style="background:#55280e; margin-top:5px;" onclick="showScreen('select-game-screen')">Back to Games</button>
+    </div>
+  </div>
+
   <div id="create-modal" class="modal-overlay">
     <div class="wood-card">
       <h2 style="font-family:'Orbitron'; font-size:18px; margin-bottom:12px; color:#ffdda1;">Create Room</h2>
@@ -540,7 +620,6 @@
     </div>
   </div>
 
-  <!-- JOIN ROOM MODAL -->
   <div id="join-modal" class="modal-overlay">
     <div class="wood-card">
       <h2 style="font-family:'Orbitron'; font-size:18px; margin-bottom:12px; color:#ffdda1;">Join Room</h2>
@@ -554,7 +633,7 @@
   <!-- ================= 2. FF STYLE LOBBY ================= -->
   <div id="room-lobby-screen" class="screen">
     <div class="room-header">
-      <h2>CUSTOM BATTLE ROOM</h2>
+      <h2 id="lobby-game-badge">CUSTOM BATTLE ROOM</h2>
       <p style="font-size:11px; color:#cbd5e1; margin-top:3px;">Click Code to Copy:</p>
       <div id="lobby-code-display" class="room-code-tag" onclick="copyRoomCode()">yd-??????</div>
     </div>
@@ -564,7 +643,7 @@
         <span class="slot-number">SLOT 1</span>
         <div class="slot-avatar">👑</div>
         <div class="slot-name" id="slot1-name">Host</div>
-        <div class="slot-status" id="slot1-status">READY (Player X)</div>
+        <div class="slot-status" id="slot1-status">READY (Player 1)</div>
       </div>
 
       <div class="slot-card" id="slot-2">
@@ -584,7 +663,7 @@
     <button class="wood-btn" style="max-width:180px; background:#ef4444; margin-top:12px; padding:8px; font-size:11px;" onclick="backToMenu()">Quit Room</button>
   </div>
 
-  <!-- ================= 3. IN-GAME SCREEN ================= -->
+  <!-- ================= 3. IN-GAME ARENA ================= -->
   <div id="game-screen" class="screen">
     <div class="game-top-bar">
       <div class="voice-controls">
@@ -599,31 +678,55 @@
 
     <div class="score-board">
       <div class="score-card x-side" id="card-x">
-        <span class="p-name" id="game-name-x">Player X</span>
+        <span class="p-name" id="game-name-x">Player 1</span>
         <span class="p-score x-color" id="score-x">0</span>
       </div>
       <div style="font-family:'Orbitron'; font-weight:900; font-size:16px; color:#d8b4fe;">VS</div>
       <div class="score-card o-side" id="card-o">
-        <span class="p-name" id="game-name-o">Player O</span>
+        <span class="p-name" id="game-name-o">Player 2</span>
         <span class="p-score o-color" id="score-o">0</span>
       </div>
     </div>
 
-    <div class="board-container">
-      <div class="board">
-        <div class="cell" onclick="handleCellClick(0)"></div>
-        <div class="cell" onclick="handleCellClick(1)"></div>
-        <div class="cell" onclick="handleCellClick(2)"></div>
-        <div class="cell" onclick="handleCellClick(3)"></div>
-        <div class="cell" onclick="handleCellClick(4)"></div>
-        <div class="cell" onclick="handleCellClick(5)"></div>
-        <div class="cell" onclick="handleCellClick(6)"></div>
-        <div class="cell" onclick="handleCellClick(7)"></div>
-        <div class="cell" onclick="handleCellClick(8)"></div>
+    <div class="game-viewport" id="viewport">
+      <!-- 1. Tic Tac Toe -->
+      <div id="tictactoe-ui" class="tictac-board" style="display:none;">
+        <div class="cell" onclick="handleTicTacToeClick(0)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(1)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(2)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(3)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(4)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(5)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(6)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(7)"></div>
+        <div class="cell" onclick="handleTicTacToeClick(8)"></div>
       </div>
+
+      <!-- 2. Rock Paper Scissors -->
+      <div id="rps-ui" class="rps-container" style="display:none;">
+        <div id="rps-status" style="font-family:'Orbitron'; font-size:12px; color:#fbd38d;">PICK YOUR WEAPON</div>
+        <div class="rps-options">
+          <button class="rps-btn" onclick="submitRPSChoice('rock')">🪨</button>
+          <button class="rps-btn" onclick="submitRPSChoice('paper')">📄</button>
+          <button class="rps-btn" onclick="submitRPSChoice('scissors')">✂️</button>
+        </div>
+        <div id="rps-reveal" style="font-family:'Orbitron'; font-size:13px; color:#00f0ff;"></div>
+      </div>
+
+      <!-- 3. Four in a Row (Connect 4) -->
+      <div id="fourinrow-ui" class="c4-board" style="display:none;"></div>
+
+      <!-- 4. Word Search Battle -->
+      <div id="wordsearch-ui" class="ws-container" style="display:none;">
+        <div class="ws-word-list" id="ws-targets">TARGET: ...</div>
+        <div class="ws-grid" id="ws-grid-board"></div>
+      </div>
+
+      <!-- 5. Canvas for Dots & Boxes, Air Hockey, Angle Shoot, Hill Climb -->
+      <canvas id="game-canvas" width="380" height="280" style="display:none;"></canvas>
     </div>
 
-    <div class="info-text" id="status-text">YOUR TURN!</div>
+    <div class="info-text" id="status-text">CONNECTING...</div>
 
     <div class="game-bottom-area">
       <div class="chat-box">
@@ -633,21 +736,16 @@
           <button class="wood-btn" style="width:55px; margin:0; padding:4px; font-size:10px; background:#a855f7;" onclick="sendChat()">Send</button>
         </div>
       </div>
-      <button class="action-btn" onclick="requestRestart()">Next Round</button>
+      <button class="action-btn" id="next-round-btn" onclick="requestRestart()">Next Round</button>
     </div>
   </div>
 
   <script>
     /* ================= Web Audio API ================= */
     let audioCtx = null;
-
     function getAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       return audioCtx;
     }
 
@@ -664,45 +762,83 @@
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(ctx.currentTime + duration);
-      } catch (e) {
-        console.warn("Audio error:", e);
-      }
+      } catch (e) {}
     }
 
     const soundMove = () => playTone(600, 'triangle', 0.1);
     const soundWin = () => {
-      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-        setTimeout(() => playTone(freq, 'sine', 0.2), idx * 100);
-      });
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => setTimeout(() => playTone(freq, 'sine', 0.2), idx * 100));
     };
     const soundTie = () => playTone(220, 'sawtooth', 0.25);
 
-    /* ================= State Variables ================= */
+    /* ================= Global State ================= */
+    let selectedGameMode = 'dotsboxes';
     let peer = null;
     let conn = null;
     let localStream = null;
     let isMicMuted = false;
 
     let myName = "Player";
-    let myRole = null; 
+    let myRole = null; // 'X' (Host) or 'O' (Guest)
     let peerName = "Opponent";
     let roomPassword = "";
     let roomCode = "";
 
-    let currentTurn = 'X';
-    let board = Array(9).fill(null);
     let scoreX = 0;
     let scoreO = 0;
     let gameActive = false;
+    let animId = null;
 
-    /* ================= Mic & Media ================= */
+    const gameModeTitles = {
+      dotsboxes: "DOTS & BOXES",
+      fourinrow: "FOUR IN A ROW",
+      wordsearch: "WORD SEARCH BATTLE",
+      tictactoe: "TIC TAC TOE",
+      airhockey: "AIR HOCKEY",
+      angleshoot: "ANGLE SHOOTING",
+      hillclimb: "HILL CLIMB RACE",
+      rps: "ROCK PAPER SCISSORS"
+    };
+
+    /* ================= Navigation ================= */
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+      document.getElementById(screenId).style.display = 'flex';
+    }
+
+    function selectGame(mode) {
+      selectedGameMode = mode;
+      document.getElementById('chosen-game-title').innerText = gameModeTitles[mode];
+      document.getElementById('lobby-game-badge').innerText = gameModeTitles[mode] + " ROOM";
+      showScreen('menu-screen');
+    }
+
+    function openCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
+    function openJoinModal() { document.getElementById('join-modal').style.display = 'flex'; }
+    function closeModals() {
+      document.getElementById('create-modal').style.display = 'none';
+      document.getElementById('join-modal').style.display = 'none';
+    }
+
+    function backToMenu() {
+      if (conn) conn.close();
+      if (peer) peer.destroy();
+      location.reload();
+    }
+
+    function copyRoomCode() {
+      navigator.clipboard.writeText(roomCode).then(() => alert("Copied Code: " + roomCode)).catch(() => {
+        prompt("Copy room code:", roomCode);
+      });
+    }
+
+    /* ================= Voice Chat ================= */
     async function initMicrophone() {
       if (localStream) return localStream;
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         return localStream;
       } catch (e) {
-        console.warn("Microphone not available or allowed.");
         return null;
       }
     }
@@ -718,64 +854,27 @@
             btn.className = "mic-btn";
             label.innerText = "MIC ON";
           } else {
-            alert("Microphone permission denied or device not found.");
+            alert("Microphone not available.");
           }
         });
         return;
       }
 
       isMicMuted = !isMicMuted;
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = !isMicMuted;
-      });
-
-      if (isMicMuted) {
-        btn.className = "mic-btn muted";
-        label.innerText = "MIC OFF";
-      } else {
-        btn.className = "mic-btn";
-        label.innerText = "MIC ON";
-      }
+      localStream.getAudioTracks().forEach(track => track.enabled = !isMicMuted);
+      btn.className = isMicMuted ? "mic-btn muted" : "mic-btn";
+      label.innerText = isMicMuted ? "MIC OFF" : "MIC ON";
     }
 
     function setPeerVolume(val) {
-      const audio = document.getElementById('remote-audio');
-      audio.volume = parseFloat(val);
+      document.getElementById('remote-audio').volume = parseFloat(val);
     }
 
-    /* ================= Navigation & Modals ================= */
-    function openCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
-    function openJoinModal() { document.getElementById('join-modal').style.display = 'flex'; }
-    function closeModals() {
-      document.getElementById('create-modal').style.display = 'none';
-      document.getElementById('join-modal').style.display = 'none';
-    }
-
-    function showScreen(screenId) {
-      document.getElementById('main-menu').style.display = 'none';
-      document.getElementById('room-lobby-screen').style.display = 'none';
-      document.getElementById('game-screen').style.display = 'none';
-      document.getElementById(screenId).style.display = 'flex';
-    }
-
-    function backToMenu() {
-      if (conn) conn.close();
-      if (peer) peer.destroy();
-      location.reload();
-    }
-
-    function copyRoomCode() {
-      navigator.clipboard.writeText(roomCode).then(() => alert("Copied Code: " + roomCode)).catch(() => {
-        prompt("Copy this room code:", roomCode);
-      });
-    }
-
-    /* ================= Host Connection ================= */
+    /* ================= Room Host / Join Logic ================= */
     async function submitCreateRoom() {
       const name = document.getElementById('host-name').value.trim();
       const pass = document.getElementById('room-pass').value.trim();
-      if (!name) return alert("Please enter your nickname!");
-      if (!pass) return alert("Please set a room password!");
+      if (!name || !pass) return alert("Fill in nickname and password!");
 
       myName = name;
       roomPassword = pass;
@@ -795,56 +894,40 @@
 
       peer.on('connection', (connection) => {
         conn = connection;
-        setupHostConnection();
+        conn.on('data', (data) => {
+          if (data.type === 'auth-request') {
+            if (data.password === roomPassword && data.gameMode === selectedGameMode) {
+              peerName = data.name;
+              conn.send({ type: 'auth-success', hostName: myName, gameMode: selectedGameMode });
+              document.getElementById('slot-2').className = 'slot-card occupied-o';
+              document.getElementById('slot2-avatar').innerText = '🎮';
+              document.getElementById('slot2-name').innerText = peerName;
+              document.getElementById('slot2-status').innerText = 'READY (Player 2)';
+              document.getElementById('start-btn').disabled = false;
+            } else {
+              conn.send({ type: 'auth-failed', reason: data.gameMode !== selectedGameMode ? 'Game mode mismatch!' : 'Incorrect Password!' });
+            }
+          } else {
+            routeInGameData(data);
+          }
+        });
+
+        conn.on('close', () => { alert("Opponent left!"); backToMenu(); });
       });
 
       peer.on('call', (call) => {
         call.answer(localStream || undefined);
-        call.on('stream', stream => {
-          document.getElementById('remote-audio').srcObject = stream;
-        });
+        call.on('stream', s => document.getElementById('remote-audio').srcObject = s);
       });
 
-      peer.on('error', (err) => {
-        alert("Peer error: " + err.type);
-        backToMenu();
-      });
+      peer.on('error', (err) => { alert("Error: " + err.type); backToMenu(); });
     }
 
-    function setupHostConnection() {
-      conn.on('data', (data) => {
-        if (data.type === 'auth-request') {
-          if (data.password === roomPassword) {
-            peerName = data.name;
-            conn.send({ type: 'auth-success', hostName: myName });
-            
-            const slot2 = document.getElementById('slot-2');
-            slot2.className = 'slot-card occupied-o';
-            document.getElementById('slot2-avatar').innerText = '🎮';
-            document.getElementById('slot2-name').innerText = peerName;
-            document.getElementById('slot2-status').innerText = 'READY (Player O)';
-            document.getElementById('start-btn').disabled = false;
-          } else {
-            conn.send({ type: 'auth-failed', reason: 'Incorrect Password!' });
-          }
-        } else {
-          handleInGameData(data);
-        }
-      });
-
-      conn.on('close', () => {
-        alert("Opponent left!");
-        backToMenu();
-      });
-    }
-
-    /* ================= Guest Connection ================= */
     let tempCode = "";
     async function submitJoinRoom() {
       const name = document.getElementById('guest-name').value.trim();
       const code = document.getElementById('join-code').value.trim();
-      if (!name) return alert("Please enter your nickname!");
-      if (!code) return alert("Please enter the room code!");
+      if (!name || !code) return alert("Fill in nickname and room code!");
 
       myName = name;
       tempCode = code;
@@ -854,10 +937,8 @@
       closeModals();
 
       peer = new Peer();
-
       peer.on('open', () => {
         conn = peer.connect(code, { reliable: true });
-
         conn.on('open', () => {
           roomCode = code;
           document.getElementById('lobby-code-display').innerText = roomCode;
@@ -866,200 +947,926 @@
           document.getElementById('slot-2').querySelector('.slot-status').style.display = 'none';
           document.getElementById('guest-auth-box').style.display = 'block';
           showScreen('room-lobby-screen');
-          setupGuestConnection();
+
+          conn.on('data', (data) => {
+            if (data.type === 'auth-success') {
+              peerName = data.hostName;
+              selectedGameMode = data.gameMode;
+              document.getElementById('slot1-name').innerText = peerName;
+              document.getElementById('guest-auth-box').style.display = 'none';
+              const s2 = document.getElementById('slot2-status');
+              s2.style.display = 'block';
+              s2.innerText = 'WAITING FOR HOST TO START...';
+
+              if (localStream) {
+                const call = peer.call(tempCode, localStream);
+                call.on('stream', s => document.getElementById('remote-audio').srcObject = s);
+              }
+            } else if (data.type === 'auth-failed') {
+              alert(data.reason);
+              backToMenu();
+            } else if (data.type === 'game-start') {
+              launchSelectedGame();
+            } else {
+              routeInGameData(data);
+            }
+          });
+
+          conn.on('close', () => { alert("Room closed!"); backToMenu(); });
         });
       });
 
       peer.on('call', (call) => {
         call.answer(localStream || undefined);
-        call.on('stream', stream => {
-          document.getElementById('remote-audio').srcObject = stream;
-        });
+        call.on('stream', s => document.getElementById('remote-audio').srcObject = s);
       });
 
-      peer.on('error', (err) => {
-        if (err.type === 'peer-unavailable') {
-          alert("Room does not exist! Check the code.");
-        } else {
-          alert("Error: " + err.type);
-        }
-        backToMenu();
-      });
+      peer.on('error', (err) => { alert("Room not found: " + err.type); backToMenu(); });
     }
 
     function verifyGuestPassword() {
       const pass = document.getElementById('entered-pass').value.trim();
-      if (!pass) return alert("Enter the room password!");
-      conn.send({ type: 'auth-request', password: pass, name: myName });
+      if (!pass) return alert("Enter password!");
+      conn.send({ type: 'auth-request', password: pass, name: myName, gameMode: selectedGameMode });
     }
 
-    function setupGuestConnection() {
-      conn.on('data', (data) => {
-        if (data.type === 'auth-success') {
-          peerName = data.hostName;
-          document.getElementById('slot1-name').innerText = peerName;
-          document.getElementById('guest-auth-box').style.display = 'none';
-          const slot2Status = document.getElementById('slot2-status');
-          slot2Status.style.display = 'block';
-          slot2Status.innerText = 'WAITING FOR HOST TO START...';
-          
-          if (localStream) {
-            const call = peer.call(tempCode, localStream);
-            call.on('stream', stream => {
-              document.getElementById('remote-audio').srcObject = stream;
-            });
-          }
-        } else if (data.type === 'auth-failed') {
-          alert(data.reason);
-          backToMenu();
-        } else if (data.type === 'game-start') {
-          launchGame();
-        } else {
-          handleInGameData(data);
-        }
-      });
-
-      conn.on('close', () => {
-        alert("Host closed the room!");
-        backToMenu();
-      });
-    }
-
-    /* ================= Game Flow ================= */
     function startGameMatch() {
       if (myRole !== 'X') return;
       conn.send({ type: 'game-start' });
-      launchGame();
+      launchSelectedGame();
     }
 
-    function launchGame() {
+    /* ================= Multi-Game Router ================= */
+    function launchSelectedGame() {
       showScreen('game-screen');
       document.getElementById('game-name-x').innerText = myRole === 'X' ? myName : peerName;
       document.getElementById('game-name-o').innerText = myRole === 'O' ? myName : peerName;
-      board = Array(9).fill(null);
-      currentTurn = 'X';
-      gameActive = true;
-      renderBoard();
-      updateTurnIndicator();
+      scoreX = 0; scoreO = 0;
+      updateScoreUI();
+
+      // Reset all viewports
+      document.getElementById('tictactoe-ui').style.display = 'none';
+      document.getElementById('rps-ui').style.display = 'none';
+      document.getElementById('fourinrow-ui').style.display = 'none';
+      document.getElementById('wordsearch-ui').style.display = 'none';
+      document.getElementById('game-canvas').style.display = 'none';
+
+      if (selectedGameMode === 'dotsboxes') initDotsBoxes();
+      else if (selectedGameMode === 'fourinrow') initFourInRow();
+      else if (selectedGameMode === 'wordsearch') initWordSearch();
+      else if (selectedGameMode === 'tictactoe') initTicTacToe();
+      else if (selectedGameMode === 'rps') initRPS();
+      else if (selectedGameMode === 'airhockey') initAirHockey();
+      else if (selectedGameMode === 'angleshoot') initAngleShoot();
+      else if (selectedGameMode === 'hillclimb') initHillClimb();
     }
 
-    function handleInGameData(data) {
-      if (data.type === 'move') {
-        board[data.index] = data.symbol;
-        currentTurn = data.symbol === 'X' ? 'O' : 'X';
-        soundMove();
-        renderBoard();
-        checkGameResult();
-      } else if (data.type === 'chat') {
+    function routeInGameData(data) {
+      if (data.type === 'chat') {
         appendMessage(data.text, 'peer');
-      } else if (data.type === 'restart') {
-        resetBoard();
+      } else if (data.type === 'restart-round') {
+        restartCurrentRound();
+      } else if (selectedGameMode === 'dotsboxes') {
+        handleDotsBoxesData(data);
+      } else if (selectedGameMode === 'fourinrow') {
+        handleFourInRowData(data);
+      } else if (selectedGameMode === 'wordsearch') {
+        handleWordSearchData(data);
+      } else if (selectedGameMode === 'tictactoe') {
+        handleTicTacToeData(data);
+      } else if (selectedGameMode === 'rps') {
+        handleRPSData(data);
+      } else if (selectedGameMode === 'airhockey') {
+        handleAirHockeyData(data);
+      } else if (selectedGameMode === 'angleshoot') {
+        handleAngleShootData(data);
+      } else if (selectedGameMode === 'hillclimb') {
+        handleHillClimbData(data);
       }
     }
 
-    function handleCellClick(index) {
-      if (!gameActive || board[index] !== null || currentTurn !== myRole) return;
-
-      board[index] = myRole;
-      currentTurn = myRole === 'X' ? 'O' : 'X';
-      soundMove();
-      renderBoard();
-      conn.send({ type: 'move', index: index, symbol: myRole });
-      checkGameResult();
-    }
-
-    function renderBoard() {
-      const cells = document.querySelectorAll('.cell');
-      cells.forEach((cell, idx) => {
-        cell.innerText = board[idx] === 'X' ? '✕' : (board[idx] === 'O' ? '○' : '');
-        cell.className = 'cell ' + (board[idx] ? board[idx].toLowerCase() : '');
-      });
-      updateTurnIndicator();
-    }
-
-    function updateTurnIndicator() {
-      const cardX = document.getElementById('card-x');
-      const cardO = document.getElementById('card-o');
-      const statusText = document.getElementById('status-text');
-
-      if (!gameActive) return;
-
-      if (currentTurn === 'X') {
-        cardX.classList.add('active-turn');
-        cardO.classList.remove('active-turn');
-      } else {
-        cardO.classList.add('active-turn');
-        cardX.classList.remove('active-turn');
-      }
-
-      if (currentTurn === myRole) {
-        statusText.innerText = "YOUR TURN!";
-        statusText.style.color = "#00f0ff";
-      } else {
-        statusText.innerText = "WAITING FOR OPPONENT...";
-        statusText.style.color = "#c084fc";
-      }
-    }
-
-    function checkGameResult() {
-      const winCombos = [
-        [0,1,2], [3,4,5], [6,7,8],
-        [0,3,6], [1,4,7], [2,5,8],
-        [0,4,8], [2,4,6]
-      ];
-
-      for (let combo of winCombos) {
-        const [a, b, c] = combo;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          const winner = board[a];
-          gameActive = false;
-          soundWin();
-
-          const cells = document.querySelectorAll('.cell');
-          cells[a].classList.add('winning-cell');
-          cells[b].classList.add('winning-cell');
-          cells[c].classList.add('winning-cell');
-
-          if (winner === 'X') scoreX++;
-          else scoreO++;
-
-          document.getElementById('score-x').innerText = scoreX;
-          document.getElementById('score-o').innerText = scoreO;
-
-          const status = document.getElementById('status-text');
-          if (winner === myRole) {
-            status.innerText = "BOOYAH! YOU WON! 🔥";
-            status.style.color = "#10b981";
-          } else {
-            status.innerText = "DEFEATED! 💀";
-            status.style.color = "#ef4444";
-          }
-          return;
-        }
-      }
-
-      if (!board.includes(null)) {
-        gameActive = false;
-        soundTie();
-        const status = document.getElementById('status-text');
-        status.innerText = "MATCH DRAW! 🤝";
-        status.style.color = "#f59e0b";
-      }
+    function updateScoreUI() {
+      document.getElementById('score-x').innerText = scoreX;
+      document.getElementById('score-o').innerText = scoreO;
     }
 
     function requestRestart() {
-      resetBoard();
-      if (conn) conn.send({ type: 'restart' });
+      restartCurrentRound();
+      if (conn) conn.send({ type: 'restart-round' });
     }
 
-    function resetBoard() {
-      board = Array(9).fill(null);
-      currentTurn = 'X';
+    function restartCurrentRound() {
+      if (selectedGameMode === 'dotsboxes') resetDotsBoxes();
+      else if (selectedGameMode === 'fourinrow') resetFourInRow();
+      else if (selectedGameMode === 'wordsearch') resetWordSearch();
+      else if (selectedGameMode === 'tictactoe') resetTicTacToe();
+      else if (selectedGameMode === 'rps') resetRPS();
+      else if (selectedGameMode === 'airhockey') resetAirHockeyRound();
+      else if (selectedGameMode === 'angleshoot') resetAngleShoot();
+      else if (selectedGameMode === 'hillclimb') resetHillClimb();
+    }
+
+    /* ================= 1. DOTS & BOXES ================= */
+    const DB_GRID = 4; // 4x4 dots = 3x3 boxes
+    let hLines = [], vLines = [], dbBoxes = [];
+    let dbTurn = 'X';
+    let dbBoxesCompletedX = 0, dbBoxesCompletedO = 0;
+
+    function initDotsBoxes() {
+      const canvas = document.getElementById('game-canvas');
+      canvas.style.display = 'block';
       gameActive = true;
+      resetDotsBoxes();
+
+      canvas.onpointerdown = (e) => {
+        if (!gameActive || dbTurn !== myRole) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        handleDotsBoxesClick(mx, my);
+      };
+
+      renderDotsBoxes();
+    }
+
+    function resetDotsBoxes() {
+      hLines = Array.from({ length: DB_GRID }, () => Array(DB_GRID - 1).fill(null));
+      vLines = Array.from({ length: DB_GRID - 1 }, () => Array(DB_GRID).fill(null));
+      dbBoxes = Array.from({ length: DB_GRID - 1 }, () => Array(DB_GRID - 1).fill(null));
+      dbTurn = 'X';
+      dbBoxesCompletedX = 0;
+      dbBoxesCompletedO = 0;
+      gameActive = true;
+      renderDotsBoxes();
+      document.getElementById('status-text').innerText = dbTurn === myRole ? "YOUR TURN TO DRAW A LINE!" : "WAITING FOR OPPONENT...";
+    }
+
+    function handleDotsBoxesClick(mx, my) {
+      const startX = 60, startY = 30, gap = 70;
+      let lineDrawn = false;
+      let lineType = null, row = -1, col = -1;
+
+      // Check Horizontal lines
+      for (let r = 0; r < DB_GRID; r++) {
+        for (let c = 0; c < DB_GRID - 1; c++) {
+          let x1 = startX + c * gap, x2 = x1 + gap;
+          let y = startY + r * gap;
+          if (mx >= x1 && mx <= x2 && Math.abs(my - y) < 14 && !hLines[r][c]) {
+            hLines[r][c] = myRole;
+            lineDrawn = true; lineType = 'H'; row = r; col = c;
+            break;
+          }
+        }
+        if (lineDrawn) break;
+      }
+
+      // Check Vertical lines
+      if (!lineDrawn) {
+        for (let r = 0; r < DB_GRID - 1; r++) {
+          for (let c = 0; c < DB_GRID; c++) {
+            let x = startX + c * gap;
+            let y1 = startY + r * gap, y2 = y1 + gap;
+            if (my >= y1 && my <= y2 && Math.abs(mx - x) < 14 && !vLines[r][c]) {
+              vLines[r][c] = myRole;
+              lineDrawn = true; lineType = 'V'; row = r; col = c;
+              break;
+            }
+          }
+          if (lineDrawn) break;
+        }
+      }
+
+      if (lineDrawn) {
+        soundMove();
+        const madeBox = checkCompletedBoxes();
+        conn.send({ type: 'db-move', lineType, row, col, role: myRole });
+
+        if (!madeBox) {
+          dbTurn = dbTurn === 'X' ? 'O' : 'X';
+        }
+        renderDotsBoxes();
+        checkDotsBoxesGameOver();
+      }
+    }
+
+    function handleDotsBoxesData(data) {
+      if (data.type === 'db-move') {
+        if (data.lineType === 'H') hLines[data.row][data.col] = data.role;
+        else if (data.lineType === 'V') vLines[data.row][data.col] = data.role;
+        soundMove();
+        const madeBox = checkCompletedBoxes();
+        if (!madeBox) {
+          dbTurn = dbTurn === 'X' ? 'O' : 'X';
+        }
+        renderDotsBoxes();
+        checkDotsBoxesGameOver();
+      }
+    }
+
+    function checkCompletedBoxes() {
+      let created = false;
+      for (let r = 0; r < DB_GRID - 1; r++) {
+        for (let c = 0; c < DB_GRID - 1; c++) {
+          if (!dbBoxes[r][c]) {
+            if (hLines[r][c] && hLines[r + 1][c] && vLines[r][c] && vLines[r][c + 1]) {
+              dbBoxes[r][c] = dbTurn;
+              if (dbTurn === 'X') dbBoxesCompletedX++;
+              else dbBoxesCompletedO++;
+              created = true;
+            }
+          }
+        }
+      }
+      return created;
+    }
+
+    function renderDotsBoxes() {
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f0524';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const startX = 60, startY = 30, gap = 70;
+
+      // Draw Completed Boxes
+      for (let r = 0; r < DB_GRID - 1; r++) {
+        for (let c = 0; c < DB_GRID - 1; c++) {
+          if (dbBoxes[r][c]) {
+            ctx.fillStyle = dbBoxes[r][c] === 'X' ? 'rgba(0, 240, 255, 0.3)' : 'rgba(255, 0, 85, 0.3)';
+            ctx.fillRect(startX + c * gap + 4, startY + r * gap + 4, gap - 8, gap - 8);
+            ctx.fillStyle = dbBoxes[r][c] === 'X' ? '#00f0ff' : '#ff0055';
+            ctx.font = "bold 16px Orbitron";
+            ctx.fillText(dbBoxes[r][c], startX + c * gap + gap / 2 - 7, startY + r * gap + gap / 2 + 6);
+          }
+        }
+      }
+
+      // Draw H Lines
+      for (let r = 0; r < DB_GRID; r++) {
+        for (let c = 0; c < DB_GRID - 1; c++) {
+          ctx.strokeStyle = hLines[r][c] ? (hLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.2)';
+          ctx.lineWidth = hLines[r][c] ? 5 : 2;
+          ctx.beginPath();
+          ctx.moveTo(startX + c * gap, startY + r * gap);
+          ctx.lineTo(startX + (c + 1) * gap, startY + r * gap);
+          ctx.stroke();
+        }
+      }
+
+      // Draw V Lines
+      for (let r = 0; r < DB_GRID - 1; r++) {
+        for (let c = 0; c < DB_GRID; c++) {
+          ctx.strokeStyle = vLines[r][c] ? (vLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.2)';
+          ctx.lineWidth = vLines[r][c] ? 5 : 2;
+          ctx.beginPath();
+          ctx.moveTo(startX + c * gap, startY + r * gap);
+          ctx.lineTo(startX + c * gap, startY + (r + 1) * gap);
+          ctx.stroke();
+        }
+      }
+
+      // Draw Dots
+      for (let r = 0; r < DB_GRID; r++) {
+        for (let c = 0; c < DB_GRID; c++) {
+          ctx.fillStyle = '#ffeedb';
+          ctx.beginPath();
+          ctx.arc(startX + c * gap, startY + r * gap, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      document.getElementById('status-text').innerText = dbTurn === myRole ? "YOUR TURN!" : "WAITING FOR OPPONENT...";
+    }
+
+    function checkDotsBoxesGameOver() {
+      const totalBoxes = (DB_GRID - 1) * (DB_GRID - 1);
+      if (dbBoxesCompletedX + dbBoxesCompletedO === totalBoxes) {
+        gameActive = false;
+        soundWin();
+        if (dbBoxesCompletedX > dbBoxesCompletedO) scoreX++;
+        else if (dbBoxesCompletedO > dbBoxesCompletedX) scoreO++;
+        updateScoreUI();
+
+        if (dbBoxesCompletedX === dbBoxesCompletedO) {
+          document.getElementById('status-text').innerText = "TIE MATCH! 🤝";
+        } else {
+          const winnerRole = dbBoxesCompletedX > dbBoxesCompletedO ? 'X' : 'O';
+          document.getElementById('status-text').innerText = winnerRole === myRole ? "BOOYAH! YOU WON! 🔥" : "DEFEATED! 💀";
+        }
+      }
+    }
+
+    /* ================= 2. FOUR IN A ROW (CONNECT 4) ================= */
+    const C4_ROWS = 6, C4_COLS = 7;
+    let c4Grid = [];
+    let c4Turn = 'X';
+
+    function initFourInRow() {
+      const container = document.getElementById('fourinrow-ui');
+      container.style.display = 'grid';
+      container.innerHTML = '';
+
+      for (let r = 0; r < C4_ROWS; r++) {
+        for (let c = 0; c < C4_COLS; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'c4-cell';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.onclick = () => handleFourInRowDrop(c);
+          container.appendChild(cell);
+        }
+      }
+      resetFourInRow();
+    }
+
+    function resetFourInRow() {
+      c4Grid = Array.from({ length: C4_ROWS }, () => Array(C4_COLS).fill(null));
+      c4Turn = 'X';
+      gameActive = true;
+      renderFourInRow();
+      document.getElementById('status-text').innerText = c4Turn === myRole ? "YOUR TURN TO DROP A TOKEN!" : "WAITING FOR OPPONENT...";
+    }
+
+    function handleFourInRowDrop(col) {
+      if (!gameActive || c4Turn !== myRole) return;
+      for (let r = C4_ROWS - 1; r >= 0; r--) {
+        if (!c4Grid[r][col]) {
+          c4Grid[r][col] = myRole;
+          soundMove();
+          conn.send({ type: 'c4-drop', col: col, role: myRole });
+          c4Turn = myRole === 'X' ? 'O' : 'X';
+          renderFourInRow();
+          checkFourInRowWinner(r, col, myRole);
+          break;
+        }
+      }
+    }
+
+    function handleFourInRowData(data) {
+      if (data.type === 'c4-drop') {
+        for (let r = C4_ROWS - 1; r >= 0; r--) {
+          if (!c4Grid[r][data.col]) {
+            c4Grid[r][data.col] = data.role;
+            soundMove();
+            c4Turn = data.role === 'X' ? 'O' : 'X';
+            renderFourInRow();
+            checkFourInRowWinner(r, data.col, data.role);
+            break;
+          }
+        }
+      }
+    }
+
+    function renderFourInRow() {
+      const cells = document.querySelectorAll('.c4-cell');
+      cells.forEach(cell => {
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+        cell.className = 'c4-cell';
+        if (c4Grid[r][c] === 'X') cell.classList.add('yellow');
+        else if (c4Grid[r][c] === 'O') cell.classList.add('red');
+      });
+      document.getElementById('status-text').innerText = c4Turn === myRole ? "YOUR TURN!" : "WAITING FOR OPPONENT...";
+    }
+
+    function checkFourInRowWinner(r, c, role) {
+      const directions = [
+        [[0, 1], [0, -1]], // Horizontal
+        [[1, 0], [-1, 0]], // Vertical
+        [[1, 1], [-1, -1]], // Diagonal \
+        [[1, -1], [-1, 1]]  // Diagonal /
+      ];
+
+      for (let dir of directions) {
+        let count = 1;
+        for (let [dr, dc] of dir) {
+          let nr = r + dr, nc = c + dc;
+          while (nr >= 0 && nr < C4_ROWS && nc >= 0 && nc < C4_COLS && c4Grid[nr][nc] === role) {
+            count++;
+            nr += dr;
+            nc += dc;
+          }
+        }
+        if (count >= 4) {
+          gameActive = false;
+          soundWin();
+          if (role === 'X') scoreX++; else scoreO++;
+          updateScoreUI();
+          document.getElementById('status-text').innerText = role === myRole ? "BOOYAH! 4 IN A ROW! 🔥" : "DEFEATED! 💀";
+          return;
+        }
+      }
+    }
+
+    /* ================= 3. WORD SEARCH BATTLE ================= */
+    const WORD_LIST = ["FIRE", "CODE", "CYBER", "NEON", "GAME", "ROOM"];
+    let wsGridData = [];
+    let wsSelectedIndices = [];
+    let currentTargetWord = "FIRE";
+    let wsWordIndex = 0;
+
+    function initWordSearch() {
+      document.getElementById('wordsearch-ui').style.display = 'flex';
+      resetWordSearch();
+    }
+
+    function resetWordSearch() {
+      wsWordIndex = 0;
+      currentTargetWord = WORD_LIST[wsWordIndex];
+      document.getElementById('ws-targets').innerText = `FIND WORD: [ ${currentTargetWord} ]`;
+      generateWordGrid(currentTargetWord);
+      gameActive = true;
+      document.getElementById('status-text').innerText = "TAP LETTERS TO SPELL THE WORD!";
+    }
+
+    function generateWordGrid(word) {
+      const size = 7;
+      wsGridData = Array.from({ length: size }, () => Array(size).fill(''));
+      const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+      // Place word horizontally at row 3
+      const startCol = Math.floor(Math.random() * (size - word.length));
+      const row = Math.floor(Math.random() * size);
+      for (let i = 0; i < word.length; i++) {
+        wsGridData[row][startCol + i] = word[i];
+      }
+
+      // Fill remaining
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          if (!wsGridData[r][c]) {
+            wsGridData[r][c] = letters[Math.floor(Math.random() * letters.length)];
+          }
+        }
+      }
+
+      const gridBoard = document.getElementById('ws-grid-board');
+      gridBoard.innerHTML = '';
+      wsSelectedIndices = [];
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const div = document.createElement('div');
+          div.className = 'ws-cell';
+          div.innerText = wsGridData[r][c];
+          div.dataset.r = r;
+          div.dataset.c = c;
+          div.onclick = () => handleWordLetterClick(div, wsGridData[r][c]);
+          gridBoard.appendChild(div);
+        }
+      }
+    }
+
+    let constructedWord = "";
+    function handleWordLetterClick(cell, char) {
+      if (!gameActive) return;
+      cell.classList.add('selected');
+      constructedWord += char;
+      soundMove();
+
+      if (constructedWord === currentTargetWord) {
+        soundWin();
+        if (myRole === 'X') scoreX++; else scoreO++;
+        updateScoreUI();
+        conn.send({ type: 'ws-found', word: constructedWord, role: myRole });
+        nextWordSearchTarget();
+      } else if (!currentTargetWord.startsWith(constructedWord)) {
+        setTimeout(() => {
+          document.querySelectorAll('.ws-cell.selected').forEach(c => c.classList.remove('selected'));
+          constructedWord = "";
+        }, 300);
+      }
+    }
+
+    function nextWordSearchTarget() {
+      wsWordIndex++;
+      if (wsWordIndex < WORD_LIST.length) {
+        currentTargetWord = WORD_LIST[wsWordIndex];
+        document.getElementById('ws-targets').innerText = `FIND WORD: [ ${currentTargetWord} ]`;
+        generateWordGrid(currentTargetWord);
+      } else {
+        gameActive = false;
+        document.getElementById('status-text').innerText = "ALL WORDS FOUND! ROUND COMPLETE! 🔥";
+      }
+    }
+
+    function handleWordSearchData(data) {
+      if (data.type === 'ws-found') {
+        soundTie();
+        if (data.role === 'X') scoreX++; else scoreO++;
+        updateScoreUI();
+        document.getElementById('status-text').innerText = `${peerName} found ${data.word}!`;
+        nextWordSearchTarget();
+      }
+    }
+
+    /* ================= 4. TIC TAC TOE ================= */
+    let tttBoard = Array(9).fill(null);
+    let tttTurn = 'X';
+
+    function initTicTacToe() {
+      document.getElementById('tictactoe-ui').style.display = 'grid';
+      resetTicTacToe();
+    }
+
+    function handleTicTacToeClick(index) {
+      if (!gameActive || tttBoard[index] !== null || tttTurn !== myRole) return;
+      tttBoard[index] = myRole;
+      tttTurn = myRole === 'X' ? 'O' : 'X';
+      soundMove();
+      renderTicTacToe();
+      conn.send({ type: 'ttt-move', index: index, symbol: myRole });
+      checkTicTacToeResult();
+    }
+
+    function handleTicTacToeData(data) {
+      if (data.type === 'ttt-move') {
+        tttBoard[data.index] = data.symbol;
+        tttTurn = data.symbol === 'X' ? 'O' : 'X';
+        soundMove();
+        renderTicTacToe();
+        checkTicTacToeResult();
+      }
+    }
+
+    function renderTicTacToe() {
       const cells = document.querySelectorAll('.cell');
-      cells.forEach(c => c.classList.remove('winning-cell'));
-      renderBoard();
-      updateTurnIndicator();
+      cells.forEach((cell, idx) => {
+        cell.innerText = tttBoard[idx] === 'X' ? '✕' : (tttBoard[idx] === 'O' ? '○' : '');
+        cell.className = 'cell ' + (tttBoard[idx] ? tttBoard[idx].toLowerCase() : '');
+      });
+      document.getElementById('status-text').innerText = tttTurn === myRole ? "YOUR TURN!" : "WAITING FOR OPPONENT...";
+    }
+
+    function checkTicTacToeResult() {
+      const combos = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for (let c of combos) {
+        const [a,b,e] = c;
+        if (tttBoard[a] && tttBoard[a] === tttBoard[b] && tttBoard[a] === tttBoard[e]) {
+          gameActive = false;
+          soundWin();
+          if (tttBoard[a] === 'X') scoreX++; else scoreO++;
+          updateScoreUI();
+          document.getElementById('status-text').innerText = tttBoard[a] === myRole ? "BOOYAH! YOU WON! 🔥" : "DEFEATED! 💀";
+          return;
+        }
+      }
+      if (!tttBoard.includes(null)) {
+        gameActive = false;
+        soundTie();
+        document.getElementById('status-text').innerText = "DRAW MATCH! 🤝";
+      }
+    }
+
+    function resetTicTacToe() {
+      tttBoard = Array(9).fill(null);
+      tttTurn = 'X';
+      gameActive = true;
+      renderTicTacToe();
+    }
+
+    /* ================= 5. ROCK PAPER SCISSORS ================= */
+    let myRPSChoice = null;
+    let peerRPSChoice = null;
+
+    function initRPS() {
+      document.getElementById('rps-ui').style.display = 'flex';
+      resetRPS();
+    }
+
+    function submitRPSChoice(choice) {
+      if (!gameActive || myRPSChoice) return;
+      myRPSChoice = choice;
+      soundMove();
+      document.getElementById('rps-status').innerText = "LOCKED! WAITING FOR PEER...";
+      conn.send({ type: 'rps-lock' });
+      if (peerRPSChoice) evaluateRPS();
+    }
+
+    function handleRPSData(data) {
+      if (data.type === 'rps-lock') {
+        peerRPSChoice = "locked";
+        if (myRPSChoice) conn.send({ type: 'rps-reveal', choice: myRPSChoice });
+      } else if (data.type === 'rps-reveal') {
+        peerRPSChoice = data.choice;
+        if (myRPSChoice) {
+          conn.send({ type: 'rps-reveal', choice: myRPSChoice });
+          evaluateRPS();
+        }
+      }
+    }
+
+    function evaluateRPS() {
+      gameActive = false;
+      const icons = { rock: '🪨', paper: '📄', scissors: '✂️' };
+      document.getElementById('rps-reveal').innerText = `You: ${icons[myRPSChoice]} VS Peer: ${icons[peerRPSChoice]}`;
+
+      if (myRPSChoice === peerRPSChoice) {
+        soundTie();
+        document.getElementById('status-text').innerText = "ROUND TIE! 🤝";
+      } else if (
+        (myRPSChoice === 'rock' && peerRPSChoice === 'scissors') ||
+        (myRPSChoice === 'paper' && peerRPSChoice === 'rock') ||
+        (myRPSChoice === 'scissors' && peerRPSChoice === 'paper')
+      ) {
+        soundWin();
+        if (myRole === 'X') scoreX++; else scoreO++;
+        document.getElementById('status-text').innerText = "YOU WON THIS ROUND! 🔥";
+      } else {
+        soundTie();
+        if (myRole === 'X') scoreO++; else scoreX++;
+        document.getElementById('status-text').innerText = "PEER WON THIS ROUND! 💀";
+      }
+      updateScoreUI();
+    }
+
+    function resetRPS() {
+      myRPSChoice = null;
+      peerRPSChoice = null;
+      gameActive = true;
+      document.getElementById('rps-status').innerText = "PICK YOUR WEAPON";
+      document.getElementById('rps-reveal').innerText = "";
+      document.getElementById('status-text').innerText = "MAKE YOUR CHOICE!";
+    }
+
+    /* ================= 6. AIR HOCKEY ================= */
+    let puck = { x: 190, y: 140, vx: 3, vy: 3, r: 10 };
+    let myPaddle = { x: 60, y: 140, r: 18 };
+    let peerPaddle = { x: 320, y: 140, r: 18 };
+
+    function initAirHockey() {
+      const canvas = document.getElementById('game-canvas');
+      canvas.style.display = 'block';
+      gameActive = true;
+
+      canvas.onpointermove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const clientY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        if (myRole === 'X') {
+          myPaddle.x = Math.min(180, Math.max(20, clientX));
+          myPaddle.y = Math.min(260, Math.max(20, clientY));
+        } else {
+          myPaddle.x = Math.max(200, Math.min(360, clientX));
+          myPaddle.y = Math.min(260, Math.max(20, clientY));
+        }
+        if (conn) conn.send({ type: 'hockey-paddle', x: myPaddle.x, y: myPaddle.y });
+      };
+
+      if (animId) cancelAnimationFrame(animId);
+      airHockeyLoop();
+    }
+
+    function handleAirHockeyData(data) {
+      if (data.type === 'hockey-paddle') {
+        peerPaddle.x = data.x;
+        peerPaddle.y = data.y;
+      } else if (data.type === 'hockey-puck' && myRole === 'O') {
+        puck.x = data.x; puck.y = data.y;
+      }
+    }
+
+    function airHockeyLoop() {
+      if (selectedGameMode !== 'airhockey') return;
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+
+      if (myRole === 'X' && gameActive) {
+        puck.x += puck.vx;
+        puck.y += puck.vy;
+
+        if (puck.y - puck.r < 0 || puck.y + puck.r > canvas.height) puck.vy *= -1;
+
+        [myPaddle, peerPaddle].forEach(p => {
+          let dx = puck.x - p.x;
+          let dy = puck.y - p.y;
+          let dist = Math.hypot(dx, dy);
+          if (dist < puck.r + p.r) {
+            soundMove();
+            puck.vx = (dx / dist) * 4;
+            puck.vy = (dy / dist) * 4;
+          }
+        });
+
+        if (puck.x < 0) {
+          scoreO++; updateScoreUI(); soundWin(); resetAirHockeyRound();
+        } else if (puck.x > canvas.width) {
+          scoreX++; updateScoreUI(); soundWin(); resetAirHockeyRound();
+        }
+        conn.send({ type: 'hockey-puck', x: puck.x, y: puck.y });
+      }
+
+      ctx.fillStyle = '#0f0524';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+
+      ctx.fillStyle = '#00f0ff';
+      ctx.beginPath();
+      ctx.arc(myRole === 'X' ? myPaddle.x : peerPaddle.x, myRole === 'X' ? myPaddle.y : peerPaddle.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ff0055';
+      ctx.beginPath();
+      ctx.arc(myRole === 'O' ? myPaddle.x : peerPaddle.x, myRole === 'O' ? myPaddle.y : peerPaddle.y, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(puck.x, puck.y, puck.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      animId = requestAnimationFrame(airHockeyLoop);
+    }
+
+    function resetAirHockeyRound() {
+      puck.x = 190; puck.y = 140;
+      puck.vx = (Math.random() > 0.5 ? 1 : -1) * 3;
+      puck.vy = (Math.random() > 0.5 ? 1 : -1) * 3;
+    }
+
+    /* ================= 7. ANGLE SHOOT ================= */
+    let tankX = { x: 40, hp: 100 };
+    let tankO = { x: 340, hp: 100 };
+    let shootTurn = 'X';
+    let projectile = null;
+
+    function initAngleShoot() {
+      const canvas = document.getElementById('game-canvas');
+      canvas.style.display = 'block';
+      gameActive = true;
+      resetAngleShoot();
+
+      canvas.onpointerdown = (e) => {
+        if (!gameActive || shootTurn !== myRole || projectile) return;
+        const rect = canvas.getBoundingClientRect();
+        const startX = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const startY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+        canvas.onpointerup = (upEvent) => {
+          const endX = (upEvent.clientX - rect.left) * (canvas.width / rect.width);
+          const endY = (upEvent.clientY - rect.top) * (canvas.height / rect.height);
+          const vx = (startX - endX) * 0.15;
+          const vy = (startY - endY) * 0.15;
+
+          fireProjectile(myRole === 'X' ? tankX.x : tankO.x, 230, vx, vy);
+          conn.send({ type: 'shoot-fire', x: myRole === 'X' ? tankX.x : tankO.x, y: 230, vx: vx, vy: vy });
+          canvas.onpointerup = null;
+        };
+      };
+
+      if (animId) cancelAnimationFrame(animId);
+      angleShootLoop();
+    }
+
+    function fireProjectile(x, y, vx, vy) {
+      projectile = { x: x, y: y, vx: vx, vy: vy };
+      soundMove();
+    }
+
+    function handleAngleShootData(data) {
+      if (data.type === 'shoot-fire') fireProjectile(data.x, data.y, data.vx, data.vy);
+    }
+
+    function angleShootLoop() {
+      if (selectedGameMode !== 'angleshoot') return;
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#0b041a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#220b42';
+      ctx.fillRect(0, 250, canvas.width, 30);
+
+      if (projectile) {
+        projectile.x += projectile.vx;
+        projectile.y += projectile.vy;
+        projectile.vy += 0.2;
+
+        ctx.fillStyle = '#ff0';
+        ctx.beginPath();
+        ctx.arc(projectile.x, projectile.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (shootTurn === 'X' && Math.hypot(projectile.x - tankO.x, projectile.y - 240) < 18) {
+          tankO.hp -= 35; soundWin(); projectile = null; nextShootTurn();
+        } else if (shootTurn === 'O' && Math.hypot(projectile.x - tankX.x, projectile.y - 240) < 18) {
+          tankX.hp -= 35; soundWin(); projectile = null; nextShootTurn();
+        } else if (projectile.y > 250 || projectile.x < 0 || projectile.x > canvas.width) {
+          projectile = null; nextShootTurn();
+        }
+      }
+
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(tankX.x - 12, 235, 24, 15);
+      ctx.fillRect(tankX.x - 15, 220, Math.max(0, tankX.hp * 0.3), 4);
+
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(tankO.x - 12, 235, 24, 15);
+      ctx.fillRect(tankO.x - 15, 220, Math.max(0, tankO.hp * 0.3), 4);
+
+      animId = requestAnimationFrame(angleShootLoop);
+    }
+
+    function nextShootTurn() {
+      if (tankX.hp <= 0) { scoreO++; updateScoreUI(); gameActive = false; soundWin(); }
+      else if (tankO.hp <= 0) { scoreX++; updateScoreUI(); gameActive = false; soundWin(); }
+      shootTurn = shootTurn === 'X' ? 'O' : 'X';
+      document.getElementById('status-text').innerText = shootTurn === myRole ? "YOUR TURN TO AIM & DRAG!" : "PEER IS AIMING...";
+    }
+
+    function resetAngleShoot() {
+      tankX.hp = 100; tankO.hp = 100;
+      shootTurn = 'X';
+      projectile = null;
+      gameActive = true;
+      document.getElementById('status-text').innerText = shootTurn === myRole ? "DRAG ON CANVAS TO FIRE!" : "WAITING FOR PEER...";
+    }
+
+    /* ================= 8. HILL CLIMB ================= */
+    let carX = { dist: 0, speed: 0 };
+    let carO = { dist: 0, speed: 0 };
+    const TRACK_FINISH = 1500;
+
+    function initHillClimb() {
+      const canvas = document.getElementById('game-canvas');
+      canvas.style.display = 'block';
+      gameActive = true;
+      resetHillClimb();
+
+      canvas.onpointerdown = () => {
+        if (!gameActive) return;
+        if (myRole === 'X') carX.speed = Math.min(carX.speed + 1.5, 6);
+        else carO.speed = Math.min(carO.speed + 1.5, 6);
+        soundMove();
+        conn.send({ type: 'climb-pos', dist: myRole === 'X' ? carX.dist : carO.dist });
+      };
+
+      if (animId) cancelAnimationFrame(animId);
+      hillClimbLoop();
+    }
+
+    function handleHillClimbData(data) {
+      if (data.type === 'climb-pos') {
+        if (myRole === 'X') carO.dist = data.dist;
+        else carX.dist = data.dist;
+      }
+    }
+
+    function hillClimbLoop() {
+      if (selectedGameMode !== 'hillclimb') return;
+      const canvas = document.getElementById('game-canvas');
+      const ctx = canvas.getContext('2d');
+
+      carX.dist += carX.speed;
+      carX.speed = Math.max(0, carX.speed - 0.05);
+
+      carO.dist += carO.speed;
+      carO.speed = Math.max(0, carO.speed - 0.05);
+
+      ctx.fillStyle = '#070214';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#6b21a8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(20, 50, 340, 60);
+      ctx.strokeRect(20, 150, 340, 60);
+
+      let progX = Math.min(300, (carX.dist / TRACK_FINISH) * 300);
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(30 + progX, 70, 25, 16);
+      ctx.fillText(`Player 1: ${Math.floor(carX.dist)}m`, 30, 42);
+
+      let progO = Math.min(300, (carO.dist / TRACK_FINISH) * 300);
+      ctx.fillStyle = '#ff0055';
+      ctx.fillRect(30 + progO, 170, 25, 16);
+      ctx.fillText(`Player 2: ${Math.floor(carO.dist)}m`, 30, 142);
+
+      if (gameActive) {
+        if (carX.dist >= TRACK_FINISH) {
+          scoreX++; updateScoreUI(); gameActive = false; soundWin();
+          document.getElementById('status-text').innerText = myRole === 'X' ? "YOU WON THE RACE! 🏁" : "PLAYER 1 WON! 💀";
+        } else if (carO.dist >= TRACK_FINISH) {
+          scoreO++; updateScoreUI(); gameActive = false; soundWin();
+          document.getElementById('status-text').innerText = myRole === 'O' ? "YOU WON THE RACE! 🏁" : "PLAYER 2 WON! 💀";
+        }
+      }
+
+      animId = requestAnimationFrame(hillClimbLoop);
+    }
+
+    function resetHillClimb() {
+      carX = { dist: 0, speed: 0 };
+      carO = { dist: 0, speed: 0 };
+      gameActive = true;
+      document.getElementById('status-text').innerText = "TAP FAST TO ACCELERATE! 🏎️";
     }
 
     /* ================= Chat ================= */
@@ -1067,7 +1874,6 @@
       const input = document.getElementById('chat-txt');
       const msg = input.value.trim();
       if (!msg || !conn) return;
-
       conn.send({ type: 'chat', text: msg });
       appendMessage(msg, 'me');
       input.value = '';
