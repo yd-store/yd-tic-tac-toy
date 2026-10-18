@@ -516,7 +516,7 @@
     .game-viewport {
       width: 100%;
       max-width: 380px;
-      height: 300px;
+      height: 310px;
       background: rgba(16, 5, 36, 0.95);
       border: 2.5px solid #b026ff;
       border-radius: 16px;
@@ -553,7 +553,7 @@
     .cell.x { color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
     .cell.o { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
-    /* Four in a Row (Free Placement Grid) */
+    /* Four in a Row (Direct Slot Placement) */
     .c4-board {
       display: grid;
       grid-template-columns: repeat(7, 36px);
@@ -673,6 +673,7 @@
 </head>
 <body>
 
+  <!-- Hidden Persistent Audio Stream Target -->
   <audio id="remote-audio" autoplay playsinline></audio>
 
   <!-- ================= 00. 15-SECOND LOADING SCREEN ================= -->
@@ -871,7 +872,7 @@
       </div>
 
       <!-- 4. Canvas for 5x5 Dots & Boxes -->
-      <canvas id="game-canvas" width="380" height="300" style="display:none;"></canvas>
+      <canvas id="game-canvas" width="380" height="310" style="display:none;"></canvas>
     </div>
 
     <div class="info-text" id="status-text">CONNECTING...</div>
@@ -919,11 +920,12 @@
     };
     const soundTie = () => playTone(220, 'sawtooth', 0.25);
 
-    /* ================= Global State & Device Fingerprint ================= */
+    /* ================= Global State & Hardware Binding ================= */
     let selectedGameMode = 'dotsboxes';
     let peer = null;
     let conn = null;
     let localStream = null;
+    let activeCall = null; // Active WebRTC Call pointer
 
     let isMicMuted = false;
     let isSpeakerMuted = false;
@@ -956,6 +958,8 @@
 
     /* ================= 15-SECOND LOADING SCREEN LOGIC ================= */
     window.addEventListener('DOMContentLoaded', () => {
+      sessionStorage.removeItem('yd_temp_session');
+
       showScreen('loading-screen');
       const progressFill = document.getElementById('progress-fill');
       const progressText = document.getElementById('progress-text');
@@ -986,7 +990,6 @@
         return;
       }
 
-      // Check if user chose "Remember Key" and key is within 24 hours
       if (authData.key && authData.expiresAt && authData.deviceId === getDeviceId()) {
         if (now < authData.expiresAt) {
           showScreen('select-game-screen');
@@ -1302,43 +1305,7 @@
       }
     }
 
-    /* ================= Navigation & Back Button (NO RELOAD) ================= */
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-      document.getElementById(screenId).style.display = 'flex';
-    }
-
-    function selectGame(mode) {
-      selectedGameMode = mode;
-      document.getElementById('chosen-game-title').innerText = gameModeTitles[mode];
-      document.getElementById('lobby-game-badge').innerText = gameModeTitles[mode] + " ROOM";
-      showScreen('menu-screen');
-    }
-
-    function openCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
-    function openJoinModal() { document.getElementById('join-modal').style.display = 'flex'; }
-    function closeModals() {
-      document.getElementById('create-modal').style.display = 'none';
-      document.getElementById('join-modal').style.display = 'none';
-    }
-
-    // Direct game selector page-e back ashar logic (No loading restart)
-    function backToMenu() {
-      gameActive = false;
-      if (conn) {
-        try { conn.close(); } catch(e){}
-        conn = null;
-      }
-      showScreen('select-game-screen');
-    }
-
-    function copyRoomCode() {
-      navigator.clipboard.writeText(roomCode).then(() => alert("Copied Code: " + roomCode)).catch(() => {
-        prompt("Copy room code:", roomCode);
-      });
-    }
-
-    /* ================= FF Style Voice System ================= */
+    /* ================= Voice Chat Hardware Engine ================= */
     async function initMicrophone() {
       if (localStream) return localStream;
       try {
@@ -1347,6 +1314,35 @@
       } catch (e) {
         return null;
       }
+    }
+
+    // 100% Guaranteed Audio & Media Destruction on Exit
+    function terminateVoiceChat() {
+      // 1. Close active WebRTC peer call
+      if (activeCall) {
+        try { activeCall.close(); } catch(e){}
+        activeCall = null;
+      }
+
+      // 2. Kill microphone hardware tracks permanently
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          try { track.stop(); } catch(e){}
+        });
+        localStream = null;
+      }
+
+      // 3. Silence and decouple remote incoming audio
+      const remoteAudio = document.getElementById('remote-audio');
+      if (remoteAudio) {
+        try {
+          remoteAudio.pause();
+          remoteAudio.srcObject = null;
+        } catch(e){}
+      }
+
+      isMicMuted = false;
+      isSpeakerMuted = false;
     }
 
     function toggleMic() {
@@ -1407,6 +1403,55 @@
       }
     }
 
+    /* ================= Navigation & Exit Routing (Zero Leak) ================= */
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+      document.getElementById(screenId).style.display = 'flex';
+    }
+
+    function selectGame(mode) {
+      selectedGameMode = mode;
+      document.getElementById('chosen-game-title').innerText = gameModeTitles[mode];
+      document.getElementById('lobby-game-badge').innerText = gameModeTitles[mode] + " ROOM";
+      showScreen('menu-screen');
+    }
+
+    function openCreateModal() { document.getElementById('create-modal').style.display = 'flex'; }
+    function openJoinModal() { document.getElementById('join-modal').style.display = 'flex'; }
+    function closeModals() {
+      document.getElementById('create-modal').style.display = 'none';
+      document.getElementById('join-modal').style.display = 'none';
+    }
+
+    // 100% Clean Disconnect from Game/Lobby: No Loading restart + Audio disconnected completely
+    function backToMenu() {
+      gameActive = false;
+
+      // Notify peer that I am leaving
+      if (conn && conn.open) {
+        try { conn.send({ type: 'player-left' }); } catch(e){}
+        try { conn.close(); } catch(e){}
+        conn = null;
+      }
+
+      // Hardware kill on voice call
+      terminateVoiceChat();
+
+      // Destroy peer instance so room code frees up and calls terminate
+      if (peer) {
+        try { peer.destroy(); } catch(e){}
+        peer = null;
+      }
+
+      showScreen('select-game-screen');
+    }
+
+    function copyRoomCode() {
+      navigator.clipboard.writeText(roomCode).then(() => alert("Copied Code: " + roomCode)).catch(() => {
+        prompt("Copy room code:", roomCode);
+      });
+    }
+
     /* ================= Room Host / Join Logic ================= */
     async function submitCreateRoom() {
       const name = document.getElementById('host-name').value.trim();
@@ -1449,10 +1494,15 @@
           }
         });
 
-        conn.on('close', () => { alert("Opponent left!"); backToMenu(); });
+        conn.on('close', () => { 
+          terminateVoiceChat();
+          alert("Opponent left!"); 
+          backToMenu(); 
+        });
       });
 
       peer.on('call', (call) => {
+        activeCall = call;
         call.answer(localStream || undefined);
         call.on('stream', s => {
           const audio = document.getElementById('remote-audio');
@@ -1461,7 +1511,11 @@
         });
       });
 
-      peer.on('error', (err) => { alert("Error: " + err.type); backToMenu(); });
+      peer.on('error', (err) => { 
+        terminateVoiceChat();
+        alert("Error: " + err.type); 
+        backToMenu(); 
+      });
     }
 
     let tempCode = "";
@@ -1500,8 +1554,8 @@
               s2.innerText = 'WAITING FOR HOST TO START...';
 
               if (localStream) {
-                const call = peer.call(tempCode, localStream);
-                call.on('stream', s => {
+                activeCall = peer.call(tempCode, localStream);
+                activeCall.on('stream', s => {
                   const audio = document.getElementById('remote-audio');
                   audio.srcObject = s;
                   audio.muted = isSpeakerMuted;
@@ -1517,11 +1571,16 @@
             }
           });
 
-          conn.on('close', () => { alert("Room closed!"); backToMenu(); });
+          conn.on('close', () => { 
+            terminateVoiceChat();
+            alert("Room closed!"); 
+            backToMenu(); 
+          });
         });
       });
 
       peer.on('call', (call) => {
+        activeCall = call;
         call.answer(localStream || undefined);
         call.on('stream', s => {
           const audio = document.getElementById('remote-audio');
@@ -1530,7 +1589,11 @@
         });
       });
 
-      peer.on('error', (err) => { alert("Room not found: " + err.type); backToMenu(); });
+      peer.on('error', (err) => { 
+        terminateVoiceChat();
+        alert("Room not found: " + err.type); 
+        backToMenu(); 
+      });
     }
 
     function verifyGuestPassword() {
@@ -1565,7 +1628,11 @@
     }
 
     function routeInGameData(data) {
-      if (data.type === 'peer-mic-status') {
+      if (data.type === 'player-left') {
+        terminateVoiceChat();
+        alert("Opponent exited the game!");
+        backToMenu();
+      } else if (data.type === 'peer-mic-status') {
         const remoteAudio = document.getElementById('remote-audio');
         if (remoteAudio && !isSpeakerMuted) {
           remoteAudio.muted = data.muted;
@@ -1603,7 +1670,7 @@
     }
 
     /* ================= 1. DOTS & BOXES (5x5 DOTS / 16 BOXES + DRAG TO CONNECT) ================= */
-    const DB_GRID = 5; // 5x5 dots = 4x4 (16 boxes)
+    const DB_GRID = 5;
     let hLines = [], vLines = [], dbBoxes = [];
     let dbTurn = 'X';
     let dbBoxesCompletedX = 0, dbBoxesCompletedO = 0;
@@ -1615,7 +1682,6 @@
       gameActive = true;
       resetDotsBoxes();
 
-      // Tap on dot and drag to adjacent dot
       canvas.onpointerdown = (e) => {
         if (!gameActive || dbTurn !== myRole) return;
         const rect = canvas.getBoundingClientRect();
@@ -1669,7 +1735,6 @@
     function connectDots(d1, d2) {
       let lineType = null, row = -1, col = -1;
 
-      // Horizontal connection
       if (d1.r === d2.r && Math.abs(d1.c - d2.c) === 1) {
         lineType = 'H';
         row = d1.r;
@@ -1677,7 +1742,6 @@
         if (hLines[row][col]) return;
         hLines[row][col] = myRole;
       }
-      // Vertical connection
       else if (d1.c === d2.c && Math.abs(d1.r - d2.r) === 1) {
         lineType = 'V';
         row = Math.min(d1.r, d2.r);
@@ -1738,7 +1802,6 @@
 
       const startX = 40, startY = 25, gap = 75;
 
-      // Draw boxes
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           if (dbBoxes[r][c]) {
@@ -1751,7 +1814,6 @@
         }
       }
 
-      // Draw H Lines
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           ctx.strokeStyle = hLines[r][c] ? (hLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1763,7 +1825,6 @@
         }
       }
 
-      // Draw V Lines
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           ctx.strokeStyle = vLines[r][c] ? (vLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1775,7 +1836,6 @@
         }
       }
 
-      // Draw Dots
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           ctx.fillStyle = '#ffeedb';
@@ -1822,7 +1882,6 @@
           cell.className = 'c4-cell';
           cell.dataset.row = r;
           cell.dataset.col = c;
-          // Tap on exact empty cell to place token
           cell.onclick = () => handleFourInRowDirectClick(r, c);
           container.appendChild(cell);
         }
