@@ -161,11 +161,29 @@
       font-size: 14px;
       text-align: center;
       font-weight: 600;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       outline: none;
     }
 
     .wood-input::placeholder { color: #a47855; }
+
+    .remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #fbd38d;
+      margin-bottom: 14px;
+      cursor: pointer;
+    }
+
+    .remember-row input {
+      accent-color: #e28a45;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
 
     /* ---------------- 02. DYNAMIC TASK SCREEN & EFFECTS ---------------- */
     #task-screen {
@@ -498,7 +516,7 @@
     .game-viewport {
       width: 100%;
       max-width: 380px;
-      height: 280px;
+      height: 300px;
       background: rgba(16, 5, 36, 0.95);
       border: 2.5px solid #b026ff;
       border-radius: 16px;
@@ -513,6 +531,7 @@
 
     canvas { width: 100%; height: 100%; display: block; }
 
+    /* Tic Tac Toe */
     .tictac-board {
       display: grid;
       grid-template-columns: repeat(3, 75px);
@@ -534,23 +553,27 @@
     .cell.x { color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
     .cell.o { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
+    /* Four in a Row (Free Placement Grid) */
     .c4-board {
       display: grid;
-      grid-template-columns: repeat(7, 34px);
-      grid-template-rows: repeat(6, 34px);
-      gap: 4px;
+      grid-template-columns: repeat(7, 36px);
+      grid-template-rows: repeat(6, 36px);
+      gap: 5px;
       background: #1e0a45;
-      padding: 6px;
-      border-radius: 12px;
+      padding: 8px;
+      border-radius: 14px;
       border: 2px solid #a855f7;
     }
     .c4-cell {
-      width: 34px; height: 34px; border-radius: 50%; background: #0b031c; cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.1);
+      width: 36px; height: 36px; border-radius: 50%; background: #0b031c; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15);
+      transition: all 0.15s;
     }
-    .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
+    .c4-cell:hover { border-color: #00f0ff; }
     .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
+    .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
 
+    /* Word Search */
     .ws-container {
       display: flex;
       flex-direction: column;
@@ -671,9 +694,15 @@
       <div class="sub-title">24-HOUR SECURITY KEY</div>
       
       <input type="text" id="access-key-input" class="wood-input" placeholder="Paste Key (yd-xxxxxxxxxx)" />
+      
+      <label class="remember-row">
+        <input type="checkbox" id="remember-key-chk" checked />
+        <span>Remember / Save Key (24 Hours)</span>
+      </label>
+
       <button class="wood-btn" onclick="submitAccessKey()">UNLOCK & ENTER</button>
       
-      <div style="margin: 10px 0; font-weight: bold; color: #d2a679; font-size: 12px;">DON'T HAVE A KEY?</div>
+      <div style="margin: 8px 0; font-weight: bold; color: #d2a679; font-size: 12px;">DON'T HAVE A KEY?</div>
       <button class="wood-btn" style="background:#0284c7; border-color:#38bdf8;" onclick="startGetKeyWorkflow()">GET FREE KEY</button>
     </div>
   </div>
@@ -832,7 +861,7 @@
         <div class="cell" onclick="handleTicTacToeClick(8)"></div>
       </div>
 
-      <!-- 2. Four in a Row (Connect 4) -->
+      <!-- 2. Four in a Row (Direct Slot Placement) -->
       <div id="fourinrow-ui" class="c4-board" style="display:none;"></div>
 
       <!-- 3. Word Search Battle -->
@@ -841,8 +870,8 @@
         <div class="ws-grid" id="ws-grid-board"></div>
       </div>
 
-      <!-- 4. Canvas for Dots & Boxes -->
-      <canvas id="game-canvas" width="380" height="280" style="display:none;"></canvas>
+      <!-- 4. Canvas for 5x5 Dots & Boxes -->
+      <canvas id="game-canvas" width="380" height="300" style="display:none;"></canvas>
     </div>
 
     <div class="info-text" id="status-text">CONNECTING...</div>
@@ -927,8 +956,6 @@
 
     /* ================= 15-SECOND LOADING SCREEN LOGIC ================= */
     window.addEventListener('DOMContentLoaded', () => {
-      sessionStorage.removeItem('yd_temp_session');
-
       showScreen('loading-screen');
       const progressFill = document.getElementById('progress-fill');
       const progressText = document.getElementById('progress-text');
@@ -959,10 +986,13 @@
         return;
       }
 
+      // Check if user chose "Remember Key" and key is within 24 hours
       if (authData.key && authData.expiresAt && authData.deviceId === getDeviceId()) {
-        if (now < authData.expiresAt && sessionStorage.getItem('yd_session_active')) {
+        if (now < authData.expiresAt) {
           showScreen('select-game-screen');
           return;
+        } else {
+          localStorage.removeItem('yd_auth_data');
         }
       }
 
@@ -971,18 +1001,19 @@
 
     function submitAccessKey() {
       const enteredKey = document.getElementById('access-key-input').value.trim();
+      const rememberMe = document.getElementById('remember-key-chk').checked;
+
       if (!enteredKey) return alert("Please enter your key!");
 
-      // 1. Permanent Key - No popup, direct unlock
       if (enteredKey === "YDGAMING") {
         soundWin();
-        localStorage.setItem('yd_auth_data', JSON.stringify({ isPermanent: true }));
-        sessionStorage.setItem('yd_session_active', 'true');
+        if (rememberMe) {
+          localStorage.setItem('yd_auth_data', JSON.stringify({ isPermanent: true }));
+        }
         showScreen('select-game-screen');
         return;
       }
 
-      // 2. 10-digit Dynamic Key verification
       const keyPattern = /^yd-[a-zA-Z0-9]{10}$/;
       if (!keyPattern.test(enteredKey)) {
         return alert("Invalid Key! Key must be in format: yd-xxxxxxxxxx (10 digits)");
@@ -995,15 +1026,15 @@
         }
 
         const expireTime = Date.now() + (24 * 60 * 60 * 1000);
-        localStorage.setItem('yd_auth_data', JSON.stringify({
-          key: enteredKey,
-          expiresAt: expireTime,
-          deviceId: getDeviceId(),
-          isPermanent: false
-        }));
-        sessionStorage.setItem('yd_session_active', 'true');
+        if (rememberMe) {
+          localStorage.setItem('yd_auth_data', JSON.stringify({
+            key: enteredKey,
+            expiresAt: expireTime,
+            deviceId: getDeviceId(),
+            isPermanent: false
+          }));
+        }
 
-        // Direct unlock without popup
         soundWin();
         showScreen('select-game-screen');
       } else {
@@ -1164,14 +1195,7 @@
       const actionBtn = document.getElementById('task-action-btn');
       const taskScreen = document.getElementById('task-screen');
 
-      const themes = [
-        '#0b0514',
-        '#05111e',
-        '#040212',
-        '#010312',
-        '#0a0321',
-        '#050818'
-      ];
+      const themes = ['#0b0514', '#05111e', '#040212', '#010312', '#0a0321', '#050818'];
       taskScreen.style.background = themes[step - 1];
 
       if (step === 1) {
@@ -1256,6 +1280,7 @@
 
       if (currentTaskStep === 1) {
         if (!telegramClicked) {
+          // 👉 EKHANE TOMAR TELEGRAM CHANNEL LINK BOSHAO 👈
           window.open('https://t.me/YOUR_TELEGRAM_LINK', '_blank');
           telegramClicked = true;
           actionBtn.innerText = "PROCEED TO STEP 2 ➡️";
@@ -1269,17 +1294,15 @@
       } else if (currentTaskStep === 6) {
         if (fxAnimId) cancelAnimationFrame(fxAnimId);
         
-        // Copy to clipboard & auto paste
         navigator.clipboard.writeText(claimedKey).catch(() => {});
         document.getElementById('access-key-input').value = claimedKey;
         
         soundWin();
-        // Popup remove kora hoyeche, direct key screen khulbe
         showScreen('key-screen');
       }
     }
 
-    /* ================= Navigation ================= */
+    /* ================= Navigation & Back Button (NO RELOAD) ================= */
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
       document.getElementById(screenId).style.display = 'flex';
@@ -1299,10 +1322,14 @@
       document.getElementById('join-modal').style.display = 'none';
     }
 
+    // Direct game selector page-e back ashar logic (No loading restart)
     function backToMenu() {
-      if (conn) conn.close();
-      if (peer) peer.destroy();
-      location.reload();
+      gameActive = false;
+      if (conn) {
+        try { conn.close(); } catch(e){}
+        conn = null;
+      }
+      showScreen('select-game-screen');
     }
 
     function copyRoomCode() {
@@ -1575,11 +1602,12 @@
       else if (selectedGameMode === 'tictactoe') resetTicTacToe();
     }
 
-    /* ================= 1. DOTS & BOXES ================= */
-    const DB_GRID = 4;
+    /* ================= 1. DOTS & BOXES (5x5 DOTS / 16 BOXES + DRAG TO CONNECT) ================= */
+    const DB_GRID = 5; // 5x5 dots = 4x4 (16 boxes)
     let hLines = [], vLines = [], dbBoxes = [];
     let dbTurn = 'X';
     let dbBoxesCompletedX = 0, dbBoxesCompletedO = 0;
+    let dragStartDot = null;
 
     function initDotsBoxes() {
       const canvas = document.getElementById('game-canvas');
@@ -1587,12 +1615,26 @@
       gameActive = true;
       resetDotsBoxes();
 
+      // Tap on dot and drag to adjacent dot
       canvas.onpointerdown = (e) => {
         if (!gameActive || dbTurn !== myRole) return;
         const rect = canvas.getBoundingClientRect();
         const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
         const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-        handleDotsBoxesClick(mx, my);
+        dragStartDot = findClosestDot(mx, my);
+      };
+
+      canvas.onpointerup = (e) => {
+        if (!gameActive || dbTurn !== myRole || !dragStartDot) return;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+        const dragEndDot = findClosestDot(mx, my);
+
+        if (dragEndDot && (dragStartDot.r !== dragEndDot.r || dragStartDot.c !== dragEndDot.c)) {
+          connectDots(dragStartDot, dragEndDot);
+        }
+        dragStartDot = null;
       };
 
       renderDotsBoxes();
@@ -1607,53 +1649,54 @@
       dbBoxesCompletedO = 0;
       gameActive = true;
       renderDotsBoxes();
-      document.getElementById('status-text').innerText = dbTurn === myRole ? "YOUR TURN TO DRAW A LINE!" : "WAITING FOR OPPONENT...";
+      document.getElementById('status-text').innerText = dbTurn === myRole ? "DRAG FROM ONE DOT TO ANOTHER!" : "WAITING FOR OPPONENT...";
     }
 
-    function handleDotsBoxesClick(mx, my) {
-      const startX = 60, startY = 30, gap = 70;
-      let lineDrawn = false;
+    function findClosestDot(mx, my) {
+      const startX = 40, startY = 25, gap = 75;
+      for (let r = 0; r < DB_GRID; r++) {
+        for (let c = 0; c < DB_GRID; c++) {
+          const dx = startX + c * gap;
+          const dy = startY + r * gap;
+          if (Math.hypot(mx - dx, my - dy) < 26) {
+            return { r, c };
+          }
+        }
+      }
+      return null;
+    }
+
+    function connectDots(d1, d2) {
       let lineType = null, row = -1, col = -1;
 
-      for (let r = 0; r < DB_GRID; r++) {
-        for (let c = 0; c < DB_GRID - 1; c++) {
-          let x1 = startX + c * gap, x2 = x1 + gap;
-          let y = startY + r * gap;
-          if (mx >= x1 && mx <= x2 && Math.abs(my - y) < 14 && !hLines[r][c]) {
-            hLines[r][c] = myRole;
-            lineDrawn = true; lineType = 'H'; row = r; col = c;
-            break;
-          }
-        }
-        if (lineDrawn) break;
+      // Horizontal connection
+      if (d1.r === d2.r && Math.abs(d1.c - d2.c) === 1) {
+        lineType = 'H';
+        row = d1.r;
+        col = Math.min(d1.c, d2.c);
+        if (hLines[row][col]) return;
+        hLines[row][col] = myRole;
+      }
+      // Vertical connection
+      else if (d1.c === d2.c && Math.abs(d1.r - d2.r) === 1) {
+        lineType = 'V';
+        row = Math.min(d1.r, d2.r);
+        col = d1.c;
+        if (vLines[row][col]) return;
+        vLines[row][col] = myRole;
+      } else {
+        return;
       }
 
-      if (!lineDrawn) {
-        for (let r = 0; r < DB_GRID - 1; r++) {
-          for (let c = 0; c < DB_GRID; c++) {
-            let x = startX + c * gap;
-            let y1 = startY + r * gap, y2 = y1 + gap;
-            if (my >= y1 && my <= y2 && Math.abs(mx - x) < 14 && !vLines[r][c]) {
-              vLines[r][c] = myRole;
-              lineDrawn = true; lineType = 'V'; row = r; col = c;
-              break;
-            }
-          }
-          if (lineDrawn) break;
-        }
-      }
+      soundMove();
+      const madeBox = checkCompletedBoxes();
+      conn.send({ type: 'db-move', lineType, row, col, role: myRole });
 
-      if (lineDrawn) {
-        soundMove();
-        const madeBox = checkCompletedBoxes();
-        conn.send({ type: 'db-move', lineType, row, col, role: myRole });
-
-        if (!madeBox) {
-          dbTurn = dbTurn === 'X' ? 'O' : 'X';
-        }
-        renderDotsBoxes();
-        checkDotsBoxesGameOver();
+      if (!madeBox) {
+        dbTurn = dbTurn === 'X' ? 'O' : 'X';
       }
+      renderDotsBoxes();
+      checkDotsBoxesGameOver();
     }
 
     function handleDotsBoxesData(data) {
@@ -1693,20 +1736,22 @@
       ctx.fillStyle = '#0f0524';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const startX = 60, startY = 30, gap = 70;
+      const startX = 40, startY = 25, gap = 75;
 
+      // Draw boxes
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           if (dbBoxes[r][c]) {
             ctx.fillStyle = dbBoxes[r][c] === 'X' ? 'rgba(0, 240, 255, 0.35)' : 'rgba(255, 0, 85, 0.35)';
             ctx.fillRect(startX + c * gap + 4, startY + r * gap + 4, gap - 8, gap - 8);
             ctx.fillStyle = dbBoxes[r][c] === 'X' ? '#00f0ff' : '#ff0055';
-            ctx.font = "bold 16px Orbitron";
-            ctx.fillText(dbBoxes[r][c], startX + c * gap + gap / 2 - 7, startY + r * gap + gap / 2 + 6);
+            ctx.font = "bold 18px Orbitron";
+            ctx.fillText(dbBoxes[r][c], startX + c * gap + gap / 2 - 7, startY + r * gap + gap / 2 + 7);
           }
         }
       }
 
+      // Draw H Lines
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           ctx.strokeStyle = hLines[r][c] ? (hLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1718,6 +1763,7 @@
         }
       }
 
+      // Draw V Lines
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           ctx.strokeStyle = vLines[r][c] ? (vLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1729,11 +1775,12 @@
         }
       }
 
+      // Draw Dots
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           ctx.fillStyle = '#ffeedb';
           ctx.beginPath();
-          ctx.arc(startX + c * gap, startY + r * gap, 5, 0, Math.PI * 2);
+          ctx.arc(startX + c * gap, startY + r * gap, 6, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -1759,7 +1806,7 @@
       }
     }
 
-    /* ================= 2. FOUR IN A ROW ================= */
+    /* ================= 2. FOUR IN A ROW (DIRECT SLOT PLACEMENT) ================= */
     const C4_ROWS = 6, C4_COLS = 7;
     let c4Grid = [];
     let c4Turn = 'X';
@@ -1775,7 +1822,8 @@
           cell.className = 'c4-cell';
           cell.dataset.row = r;
           cell.dataset.col = c;
-          cell.onclick = () => handleFourInRowDrop(c);
+          // Tap on exact empty cell to place token
+          cell.onclick = () => handleFourInRowDirectClick(r, c);
           container.appendChild(cell);
         }
       }
@@ -1787,36 +1835,27 @@
       c4Turn = 'X';
       gameActive = true;
       renderFourInRow();
-      document.getElementById('status-text').innerText = c4Turn === myRole ? "YOUR TURN TO DROP A TOKEN!" : "WAITING FOR OPPONENT...";
+      document.getElementById('status-text').innerText = c4Turn === myRole ? "YOUR TURN! TAP ANY EMPTY SLOT!" : "WAITING FOR OPPONENT...";
     }
 
-    function handleFourInRowDrop(col) {
-      if (!gameActive || c4Turn !== myRole) return;
-      for (let r = C4_ROWS - 1; r >= 0; r--) {
-        if (!c4Grid[r][col]) {
-          c4Grid[r][col] = myRole;
-          soundMove();
-          conn.send({ type: 'c4-drop', col: col, role: myRole });
-          c4Turn = myRole === 'X' ? 'O' : 'X';
-          renderFourInRow();
-          checkFourInRowWinner(r, col, myRole);
-          break;
-        }
-      }
+    function handleFourInRowDirectClick(r, c) {
+      if (!gameActive || c4Turn !== myRole || c4Grid[r][c] !== null) return;
+
+      c4Grid[r][c] = myRole;
+      soundMove();
+      conn.send({ type: 'c4-direct-drop', row: r, col: c, role: myRole });
+      c4Turn = myRole === 'X' ? 'O' : 'X';
+      renderFourInRow();
+      checkFourInRowWinner(r, c, myRole);
     }
 
     function handleFourInRowData(data) {
-      if (data.type === 'c4-drop') {
-        for (let r = C4_ROWS - 1; r >= 0; r--) {
-          if (!c4Grid[r][data.col]) {
-            c4Grid[r][data.col] = data.role;
-            soundMove();
-            c4Turn = data.role === 'X' ? 'O' : 'X';
-            renderFourInRow();
-            checkFourInRowWinner(r, data.col, data.role);
-            break;
-          }
-        }
+      if (data.type === 'c4-direct-drop') {
+        c4Grid[data.row][data.col] = data.role;
+        soundMove();
+        c4Turn = data.role === 'X' ? 'O' : 'X';
+        renderFourInRow();
+        checkFourInRowWinner(data.row, data.col, data.role);
       }
     }
 
