@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>YEADUL - 3D 1v1 Battle Arena</title>
+  <title>YD GAME HUB - 3D 1v1 Battle Arena</title>
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
 
@@ -39,27 +39,64 @@
       position: relative;
     }
 
-    /* ---------------- 0. 3D GAME SELECTOR ---------------- */
-    #select-game-screen {
+    /* ---------------- 00. 15-SEC WOOD LOADING SCREEN ---------------- */
+    #loading-screen {
       display: flex;
-      background: radial-gradient(circle at 50% 30%, rgba(55,28,12,0.85) 0%, rgba(12,6,3,0.98) 100%),
+      background: radial-gradient(circle at 50% 30%, rgba(55,28,12,0.9) 0%, rgba(12,6,3,0.98) 100%),
                   url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
-      perspective: 1000px;
+      z-index: 9999;
     }
 
-    .arena-banner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 25px;
-      transform: translateZ(20px);
+    .wood-loader-card {
+      background: linear-gradient(145deg, #5c3822, #3e2213);
+      border: 3px solid #8d5b37;
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.2);
+      padding: 35px 25px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 18px;
+      background: #1d0c05;
+      border: 2px solid #8d5b37;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 25px;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff8c00, #ffd700);
+      box-shadow: 0 0 12px #ff8c00;
+      transition: width 0.1s linear;
+    }
+
+    .progress-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      color: #ffd899;
+      margin-top: 10px;
+      letter-spacing: 1.5px;
+    }
+
+    /* ---------------- 01. WOOD KEY LOGIN SYSTEM ---------------- */
+    #key-screen {
+      background: radial-gradient(circle, rgba(45,26,14,0.8) 0%, rgba(15,8,4,0.98) 100%),
+                  url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
     }
 
     .wood-carved-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 38px;
+      font-size: 34px;
       font-weight: 900;
-      letter-spacing: 6px;
+      letter-spacing: 5px;
       color: #4a210d;
       text-transform: uppercase;
       text-shadow: 
@@ -67,101 +104,17 @@
         -1px -2px 3px rgba(0, 0, 0, 0.95),
         3px 4px 6px rgba(0, 0, 0, 0.85);
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.7));
-      margin-bottom: 3px;
+      margin-bottom: 2px;
     }
 
     .sub-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: #ffd899;
-      text-shadow: 0 2px 5px rgba(0,0,0,0.9), 0 0 10px rgba(255,180,50,0.4);
-    }
-
-    .game-grid-3d {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 18px;
-      width: 100%;
-      max-width: 440px;
-      padding: 10px 5px;
-    }
-
-    .game-choice-3d {
-      position: relative;
-      background: linear-gradient(180deg, #7a4624 0%, #46230f 60%, #2e1408 100%);
-      border: 2px solid #b37344;
-      border-radius: 18px;
-      padding: 22px 14px 18px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 
-        0 8px 0 #1f0b04,
-        0 12px 18px rgba(0, 0, 0, 0.85),
-        inset 0 2px 3px rgba(255, 255, 255, 0.35),
-        inset 0 -3px 5px rgba(0, 0, 0, 0.6);
-      transform: translateY(0);
-      transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .game-choice-3d::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 10%;
-      width: 80%;
-      height: 35%;
-      background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-      border-radius: 12px 12px 60px 60px;
-      pointer-events: none;
-    }
-
-    .game-choice-3d:hover {
-      transform: translateY(-4px);
-      border-color: #38bdf8;
-      box-shadow: 
-        0 12px 0 #1f0b04,
-        0 16px 25px rgba(0, 240, 255, 0.3),
-        inset 0 2px 4px rgba(255, 255, 255, 0.45);
-    }
-
-    .game-choice-3d:active {
-      transform: translateY(6px);
-      box-shadow: 
-        0 2px 0 #1f0b04,
-        0 4px 8px rgba(0, 0, 0, 0.9),
-        inset 0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-
-    .game-choice-3d .game-icon-3d {
-      font-size: 38px;
-      margin-bottom: 8px;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.85));
-      transition: transform 0.15s ease;
-    }
-
-    .game-choice-3d:hover .game-icon-3d {
-      transform: scale(1.1);
-    }
-
-    .game-choice-3d .game-name-3d {
-      font-family: 'Orbitron', sans-serif;
       font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: #fff2df;
-      text-align: center;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.9), 0 0 6px rgba(255,210,130,0.4);
-    }
-
-    /* ---------------- 1. ROOM CREATE & JOIN ---------------- */
-    #menu-screen {
-      background: radial-gradient(circle, rgba(45,26,14,0.75) 0%, rgba(15,8,4,0.96) 100%),
-                  url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      color: #ffd899;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+      margin-bottom: 20px;
     }
 
     .wood-card {
@@ -175,6 +128,7 @@
       text-align: center;
       color: #faebd7;
       z-index: 10;
+      position: relative;
     }
 
     .wood-btn {
@@ -213,6 +167,114 @@
 
     .wood-input::placeholder { color: #a47855; }
 
+    /* ---------------- 02. DYNAMIC TASK SCREEN & EFFECTS ---------------- */
+    #task-screen {
+      overflow: hidden;
+      background: #0b0514;
+      transition: background 0.5s ease;
+    }
+
+    #task-fx-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .task-step-box {
+      background: rgba(33, 13, 4, 0.9);
+      border: 2px dashed #e28a45;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 15px;
+    }
+
+    .task-counter {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      color: #00f0ff;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    /* ---------------- 0. 3D GAME SELECTOR ---------------- */
+    #select-game-screen {
+      background: radial-gradient(circle at 50% 30%, rgba(55,28,12,0.85) 0%, rgba(12,6,3,0.98) 100%),
+                  url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+      perspective: 1000px;
+    }
+
+    .arena-banner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 25px;
+      transform: translateZ(20px);
+    }
+
+    .game-grid-3d {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      width: 100%;
+      max-width: 440px;
+      padding: 10px 5px;
+    }
+
+    .game-choice-3d {
+      position: relative;
+      background: linear-gradient(180deg, #7a4624 0%, #46230f 60%, #2e1408 100%);
+      border: 2px solid #b37344;
+      border-radius: 18px;
+      padding: 22px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 
+        0 8px 0 #1f0b04,
+        0 12px 18px rgba(0, 0, 0, 0.85),
+        inset 0 2px 3px rgba(255, 255, 255, 0.35),
+        inset 0 -3px 5px rgba(0, 0, 0, 0.6);
+      transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .game-choice-3d:hover {
+      transform: translateY(-4px);
+      border-color: #38bdf8;
+      box-shadow: 0 12px 0 #1f0b04, 0 16px 25px rgba(0, 240, 255, 0.3);
+    }
+
+    .game-choice-3d:active {
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 #1f0b04, 0 4px 8px rgba(0, 0, 0, 0.9);
+    }
+
+    .game-choice-3d .game-icon-3d {
+      font-size: 38px;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.85));
+    }
+
+    .game-choice-3d .game-name-3d {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #fff2df;
+      text-align: center;
+    }
+
+    /* ---------------- ROOM LOBBY & ARENA ---------------- */
+    #menu-screen {
+      background: radial-gradient(circle, rgba(45,26,14,0.75) 0%, rgba(15,8,4,0.96) 100%),
+                  url('https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -225,7 +287,6 @@
       padding: 15px;
     }
 
-    /* ---------------- 2. FF CUSTOM ROOM LOBBY ---------------- */
     #room-lobby-screen {
       background: radial-gradient(circle at center, #1b0f38 0%, #08031a 90%);
     }
@@ -355,7 +416,7 @@
       box-shadow: none;
     }
 
-    /* ---------------- 3. IN-GAME ARENA ---------------- */
+    /* ---------------- IN-GAME ARENA ---------------- */
     #game-screen {
       background: radial-gradient(circle at center, #180d38 0%, #060214 80%);
       padding: 10px;
@@ -371,7 +432,6 @@
       z-index: 10;
     }
 
-    /* FF Style Voice Controls (Mic & Speaker) */
     .voice-controls {
       display: flex;
       align-items: center;
@@ -453,7 +513,6 @@
 
     canvas { width: 100%; height: 100%; display: block; }
 
-    /* Tic Tac Toe */
     .tictac-board {
       display: grid;
       grid-template-columns: repeat(3, 75px);
@@ -475,7 +534,6 @@
     .cell.x { color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
     .cell.o { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
 
-    /* Four in a Row (Connect 4) */
     .c4-board {
       display: grid;
       grid-template-columns: repeat(7, 34px);
@@ -493,7 +551,6 @@
     .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
     .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
 
-    /* Word Search */
     .ws-container {
       display: flex;
       flex-direction: column;
@@ -516,13 +573,12 @@
       gap: 3px;
     }
     .ws-cell {
-      width: 32px; height: 32px; background: rgba(25, 12, 54, 0.9); border: 1px solid #6b21a8;
+      width: 32px; height: 32px; background: rgba(255, 255, 255, 0.05); border: 1px solid #6b21a8;
       border-radius: 6px; display: flex; align-items: center; justify-content: center;
       font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 800; cursor: pointer;
     }
     .ws-cell.selected { background: #a855f7; color: #fff; }
 
-    /* Controls & Info */
     .info-text {
       margin-top: 6px;
       font-family: 'Orbitron', sans-serif;
@@ -594,17 +650,61 @@
 </head>
 <body>
 
-  <!-- Persistent remote audio node -->
   <audio id="remote-audio" autoplay playsinline></audio>
+
+  <!-- ================= 00. 15-SECOND LOADING SCREEN ================= -->
+  <div id="loading-screen" class="screen">
+    <div class="wood-loader-card">
+      <div class="wood-carved-title">YD GAME HUB</div>
+      <div class="sub-title">CONNECTING ARENA CORE</div>
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-text" class="progress-text">LOADING... 0%</div>
+    </div>
+  </div>
+
+  <!-- ================= 01. 24-HOUR KEY AUTH SCREEN ================= -->
+  <div id="key-screen" class="screen">
+    <div class="wood-card">
+      <div class="wood-carved-title">YD ACCESS</div>
+      <div class="sub-title">24-HOUR SECURITY KEY</div>
+      
+      <input type="text" id="access-key-input" class="wood-input" placeholder="Paste Key (yd-xxxxxxxxxx)" />
+      <button class="wood-btn" onclick="submitAccessKey()">UNLOCK & ENTER</button>
+      
+      <div style="margin: 10px 0; font-weight: bold; color: #d2a679; font-size: 12px;">DON'T HAVE A KEY?</div>
+      <button class="wood-btn" style="background:#0284c7; border-color:#38bdf8;" onclick="startGetKeyWorkflow()">GET FREE KEY</button>
+    </div>
+  </div>
+
+  <!-- ================= 02. 6-STEP ANIMATED TASK SCREEN ================= -->
+  <div id="task-screen" class="screen">
+    <canvas id="task-fx-canvas"></canvas>
+
+    <div class="wood-card">
+      <div class="wood-carved-title">TASK VERIFY</div>
+      <div class="sub-title" id="task-stage-title">STEP 1: TELEGRAM JOIN</div>
+
+      <div class="task-step-box">
+        <div id="task-counter-text" class="task-counter">STEP 1 / 6</div>
+        <p id="task-desc" style="font-size: 12px; color: #fbd38d; margin-bottom: 10px;">Click below to join our official Telegram channel:</p>
+        
+        <div id="task-timer-text" style="font-family:'Orbitron'; font-size: 24px; color: #ffd700; font-weight: 900; letter-spacing: 1px; word-break: break-all;">OPEN</div>
+      </div>
+
+      <button id="task-action-btn" class="wood-btn" onclick="handleTaskAction()">JOIN TELEGRAM</button>
+      <button class="wood-btn" style="background:#55280e; margin-bottom:0;" onclick="cancelTaskWorkflow()">CANCEL</button>
+    </div>
+  </div>
 
   <!-- ================= 0. 3D LEVEL GAME SELECTOR ================= -->
   <div id="select-game-screen" class="screen">
     <div class="arena-banner">
-      <div class="wood-carved-title">YEADUL</div>
+      <div class="wood-carved-title">YD GAME HUB</div>
       <div class="sub-title">CHOOSE YOUR ARENA</div>
     </div>
 
-    <!-- 4 Games with 3D Depth View -->
     <div class="game-grid-3d">
       <div class="game-choice-3d" onclick="selectGame('dotsboxes')">
         <div class="game-icon-3d">🔲</div>
@@ -692,16 +792,13 @@
   <!-- ================= 3. IN-GAME ARENA ================= -->
   <div id="game-screen" class="screen">
     <div class="game-top-bar">
-      <!-- 2 Independent FF Style Voice Controls: Bolar (Mic) & Sonar (Speaker) -->
       <div class="voice-controls">
-        <!-- Bolar Option (Mic) -->
-        <button class="ff-voice-btn active" id="mic-toggle-btn" onclick="toggleMic()" title="কথা বলার অপশন">
+        <button class="ff-voice-btn active" id="mic-toggle-btn" onclick="toggleMic()" title="Kotha bolar option">
           <span id="mic-icon">🎙️</span>
           <span id="mic-label">MIC ON</span>
         </button>
 
-        <!-- Sonar Option (Speaker/Headphone) -->
-        <button class="ff-voice-btn active" id="spk-toggle-btn" onclick="toggleSpeaker()" title="কথা শোনার অপশন">
+        <button class="ff-voice-btn active" id="spk-toggle-btn" onclick="toggleSpeaker()" title="Kotha shonar option">
           <span id="spk-icon">🎧</span>
           <span id="spk-label">HEAR ON</span>
         </button>
@@ -793,18 +890,17 @@
     };
     const soundTie = () => playTone(220, 'sawtooth', 0.25);
 
-    /* ================= Global State ================= */
+    /* ================= Global State & Device Fingerprint ================= */
     let selectedGameMode = 'dotsboxes';
     let peer = null;
     let conn = null;
     let localStream = null;
 
-    // Independent Free Fire Style States
-    let isMicMuted = false;      // Bolar option (Mic)
-    let isSpeakerMuted = false;  // Sonar option (Speaker / Headphone)
+    let isMicMuted = false;
+    let isSpeakerMuted = false;
 
     let myName = "Player";
-    let myRole = null; // 'X' (Host) or 'O' (Guest)
+    let myRole = null;
     let peerName = "Opponent";
     let roomPassword = "";
     let roomCode = "";
@@ -819,6 +915,369 @@
       wordsearch: "WORD SEARCH",
       tictactoe: "TIC TAC TOE"
     };
+
+    function getDeviceId() {
+      let dId = localStorage.getItem('yd_device_id');
+      if (!dId) {
+        dId = 'DEV-' + Math.random().toString(36).substring(2, 10) + '-' + navigator.userAgent.length;
+        localStorage.setItem('yd_device_id', dId);
+      }
+      return dId;
+    }
+
+    /* ================= 15-SECOND LOADING SCREEN LOGIC ================= */
+    window.addEventListener('DOMContentLoaded', () => {
+      sessionStorage.removeItem('yd_temp_session');
+
+      showScreen('loading-screen');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+      const duration = 15000;
+      const interval = 100;
+      let elapsed = 0;
+
+      const loaderTimer = setInterval(() => {
+        elapsed += interval;
+        const percent = Math.min(100, Math.floor((elapsed / duration) * 100));
+        progressFill.style.width = percent + '%';
+        progressText.innerText = `LOADING... ${percent}%`;
+
+        if (elapsed >= duration) {
+          clearInterval(loaderTimer);
+          checkExistingAuthentication();
+        }
+      }, interval);
+    });
+
+    /* ================= 24-HOUR KEY AUTHENTICATION ================= */
+    function checkExistingAuthentication() {
+      const authData = JSON.parse(localStorage.getItem('yd_auth_data') || '{}');
+      const now = Date.now();
+
+      if (authData.isPermanent) {
+        showScreen('select-game-screen');
+        return;
+      }
+
+      if (authData.key && authData.expiresAt && authData.deviceId === getDeviceId()) {
+        if (now < authData.expiresAt && sessionStorage.getItem('yd_session_active')) {
+          showScreen('select-game-screen');
+          return;
+        }
+      }
+
+      showScreen('key-screen');
+    }
+
+    function submitAccessKey() {
+      const enteredKey = document.getElementById('access-key-input').value.trim();
+      if (!enteredKey) return alert("Please enter your key!");
+
+      // 1. Permanent Key - No popup, direct unlock
+      if (enteredKey === "YDGAMING") {
+        soundWin();
+        localStorage.setItem('yd_auth_data', JSON.stringify({ isPermanent: true }));
+        sessionStorage.setItem('yd_session_active', 'true');
+        showScreen('select-game-screen');
+        return;
+      }
+
+      // 2. 10-digit Dynamic Key verification
+      const keyPattern = /^yd-[a-zA-Z0-9]{10}$/;
+      if (!keyPattern.test(enteredKey)) {
+        return alert("Invalid Key! Key must be in format: yd-xxxxxxxxxx (10 digits)");
+      }
+
+      const generatedPool = JSON.parse(localStorage.getItem('yd_generated_key') || '{}');
+      if (generatedPool.key === enteredKey) {
+        if (generatedPool.deviceId !== getDeviceId()) {
+          return alert("Device Mismatch! This key belongs to another device.");
+        }
+
+        const expireTime = Date.now() + (24 * 60 * 60 * 1000);
+        localStorage.setItem('yd_auth_data', JSON.stringify({
+          key: enteredKey,
+          expiresAt: expireTime,
+          deviceId: getDeviceId(),
+          isPermanent: false
+        }));
+        sessionStorage.setItem('yd_session_active', 'true');
+
+        // Direct unlock without popup
+        soundWin();
+        showScreen('select-game-screen');
+      } else {
+        alert("Unrecognized Key! Complete the task to get your unique key.");
+      }
+    }
+
+    /* ================= 6-STEP CINEMATIC TASK SYSTEM ================= */
+    let currentTaskStep = 1;
+    let taskTimer = null;
+    let fxAnimId = null;
+    let telegramClicked = false;
+    let claimedKey = "";
+
+    let raindrops = [];
+    let stars = [];
+    let lightningFlash = 0;
+
+    function startGetKeyWorkflow() {
+      currentTaskStep = 1;
+      telegramClicked = false;
+      claimedKey = "";
+      showScreen('task-screen');
+      setupFxCanvas();
+      loadTaskStep(1);
+    }
+
+    function cancelTaskWorkflow() {
+      if (taskTimer) clearInterval(taskTimer);
+      if (fxAnimId) cancelAnimationFrame(fxAnimId);
+      showScreen('key-screen');
+    }
+
+    function setupFxCanvas() {
+      const cvs = document.getElementById('task-fx-canvas');
+      cvs.width = window.innerWidth;
+      cvs.height = window.innerHeight;
+
+      raindrops = [];
+      for (let i = 0; i < 130; i++) {
+        raindrops.push({
+          x: Math.random() * cvs.width,
+          y: Math.random() * cvs.height,
+          l: Math.random() * 15 + 10,
+          s: Math.random() * 8 + 6
+        });
+      }
+
+      stars = [];
+      for (let i = 0; i < 90; i++) {
+        stars.push({
+          x: Math.random() * cvs.width,
+          y: Math.random() * (cvs.height * 0.7),
+          r: Math.random() * 1.8 + 0.6,
+          a: Math.random()
+        });
+      }
+
+      if (fxAnimId) cancelAnimationFrame(fxAnimId);
+      renderTaskFxLoop();
+    }
+
+    function renderTaskFxLoop() {
+      const cvs = document.getElementById('task-fx-canvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+      if (currentTaskStep === 2 || currentTaskStep === 6) {
+        ctx.strokeStyle = 'rgba(160, 210, 255, 0.65)';
+        ctx.lineWidth = 1.6;
+        for (let r of raindrops) {
+          ctx.beginPath();
+          ctx.moveTo(r.x, r.y);
+          ctx.lineTo(r.x - 2, r.y + r.l);
+          ctx.stroke();
+
+          r.y += r.s;
+          r.x -= 1;
+          if (r.y > cvs.height) { r.y = -15; r.x = Math.random() * cvs.width; }
+        }
+      }
+
+      if (currentTaskStep === 3 || currentTaskStep === 6) {
+        if (Math.random() < 0.04) {
+          lightningFlash = 0.85;
+          soundMove();
+        }
+        if (lightningFlash > 0) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${lightningFlash})`;
+          ctx.fillRect(0, 0, cvs.width, cvs.height);
+
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          let bx = Math.random() * cvs.width;
+          let by = 0;
+          ctx.moveTo(bx, by);
+          while (by < cvs.height * 0.8) {
+            bx += (Math.random() - 0.5) * 50;
+            by += Math.random() * 40 + 20;
+            ctx.lineTo(bx, by);
+          }
+          ctx.stroke();
+          lightningFlash -= 0.08;
+        }
+      }
+
+      if (currentTaskStep === 4) {
+        ctx.fillStyle = '#fffae0';
+        ctx.shadowColor = '#fff5a0';
+        ctx.shadowBlur = 35;
+        ctx.beginPath();
+        ctx.arc(cvs.width * 0.8, 120, 38, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        for (let s of stars) {
+          s.a += (Math.random() - 0.5) * 0.08;
+          s.a = Math.max(0.2, Math.min(1, s.a));
+          ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      if (currentTaskStep === 5 || currentTaskStep === 6) {
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 15;
+
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          let ex = 0;
+          let ey = (cvs.height * 0.25) * (i + 1);
+          ctx.moveTo(ex, ey);
+          while (ex < cvs.width) {
+            ex += Math.random() * 30 + 10;
+            ey += (Math.random() - 0.5) * 45;
+            ctx.lineTo(ex, ey);
+          }
+          ctx.stroke();
+        }
+        ctx.shadowBlur = 0;
+      }
+
+      fxAnimId = requestAnimationFrame(renderTaskFxLoop);
+    }
+
+    function loadTaskStep(step) {
+      currentTaskStep = step;
+      document.getElementById('task-counter-text').innerText = `STEP ${step} / 6`;
+      const title = document.getElementById('task-stage-title');
+      const desc = document.getElementById('task-desc');
+      const timerText = document.getElementById('task-timer-text');
+      const actionBtn = document.getElementById('task-action-btn');
+      const taskScreen = document.getElementById('task-screen');
+
+      const themes = [
+        '#0b0514',
+        '#05111e',
+        '#040212',
+        '#010312',
+        '#0a0321',
+        '#050818'
+      ];
+      taskScreen.style.background = themes[step - 1];
+
+      if (step === 1) {
+        title.innerText = "STEP 1: TELEGRAM VERIFY";
+        desc.innerText = "Telegram channel join korun. Join korle Step 2 unlock hobe:";
+        timerText.style.fontSize = "24px";
+        timerText.style.color = "#ffd700";
+        timerText.innerText = "OPEN";
+        actionBtn.disabled = false;
+        actionBtn.innerText = "JOIN TELEGRAM";
+        actionBtn.style.background = "linear-gradient(180deg, #0284c7, #0369a1)";
+        telegramClicked = false;
+      } else {
+        const stageTitles = [
+          "",
+          "STEP 2: RAINSTORM ZONE 🌧️",
+          "STEP 3: THUNDER & LIGHTNING ⚡",
+          "STEP 4: MIDNIGHT MOON & STARS 🌙",
+          "STEP 5: ELECTRIC ENERGY FIELD ⚡🔥",
+          "STEP 6: FINAL MEGA STORM ⛈️🔥"
+        ];
+        const stageDescs = [
+          "",
+          "Heavy rainfall shuru hoyeche! 10 second wait korun...",
+          "Akashe bidyut chomkacche! Calibration cholche...",
+          "Rater akashe chand o tara! Synchronizing matrix...",
+          "High voltage current discharge hocche! Standby...",
+          "Shob combo eksathe cholche! Key generate hoye geche..."
+        ];
+
+        title.innerText = stageTitles[step - 1];
+        desc.innerText = stageDescs[step - 1];
+
+        actionBtn.disabled = true;
+        actionBtn.innerText = "WAITING...";
+        actionBtn.style.background = "#55280e";
+
+        let timeLeft = 10;
+        timerText.style.fontSize = "24px";
+        timerText.style.color = "#ffd700";
+        timerText.innerText = timeLeft + "s";
+
+        if (taskTimer) clearInterval(taskTimer);
+        taskTimer = setInterval(() => {
+          timeLeft--;
+          timerText.innerText = timeLeft + "s";
+          if (timeLeft <= 0) {
+            clearInterval(taskTimer);
+            if (step === 6) {
+              const random10 = Math.random().toString(36).substring(2, 12).toLowerCase().padEnd(10, '0').slice(0, 10);
+              claimedKey = 'yd-' + random10;
+
+              localStorage.setItem('yd_generated_key', JSON.stringify({
+                key: claimedKey,
+                deviceId: getDeviceId(),
+                createdAt: Date.now()
+              }));
+
+              timerText.style.fontSize = "17px";
+              timerText.style.color = "#00f0ff";
+              timerText.innerText = claimedKey;
+              desc.innerText = "Your 24-Hour Key is ready! Click Copy below:";
+
+              actionBtn.disabled = false;
+              actionBtn.innerText = "COPY KEY";
+              actionBtn.style.background = "linear-gradient(180deg, #b86b32, #7a3e12)";
+              actionBtn.style.border = "2px solid #e28a45";
+              soundWin();
+            } else {
+              actionBtn.disabled = false;
+              actionBtn.innerText = "PROCEED TO NEXT STEP ➡️";
+              actionBtn.style.background = "linear-gradient(180deg, #10b981, #047857)";
+              soundWin();
+            }
+          }
+        }, 1000);
+      }
+    }
+
+    function handleTaskAction() {
+      const actionBtn = document.getElementById('task-action-btn');
+
+      if (currentTaskStep === 1) {
+        if (!telegramClicked) {
+          window.open('https://t.me/YOUR_TELEGRAM_LINK', '_blank');
+          telegramClicked = true;
+          actionBtn.innerText = "PROCEED TO STEP 2 ➡️";
+          actionBtn.style.background = "linear-gradient(180deg, #10b981, #047857)";
+          soundMove();
+        } else {
+          loadTaskStep(2);
+        }
+      } else if (currentTaskStep >= 2 && currentTaskStep < 6) {
+        loadTaskStep(currentTaskStep + 1);
+      } else if (currentTaskStep === 6) {
+        if (fxAnimId) cancelAnimationFrame(fxAnimId);
+        
+        // Copy to clipboard & auto paste
+        navigator.clipboard.writeText(claimedKey).catch(() => {});
+        document.getElementById('access-key-input').value = claimedKey;
+        
+        soundWin();
+        // Popup remove kora hoyeche, direct key screen khulbe
+        showScreen('key-screen');
+      }
+    }
 
     /* ================= Navigation ================= */
     function showScreen(screenId) {
@@ -852,7 +1311,7 @@
       });
     }
 
-    /* ================= FF STYLE INDEPENDENT VOICE CONTROLS ================= */
+    /* ================= FF Style Voice System ================= */
     async function initMicrophone() {
       if (localStream) return localStream;
       try {
@@ -863,7 +1322,6 @@
       }
     }
 
-    // 1. BOLAR OPTION (MIC ON / OFF)
     function toggleMic() {
       const btn = document.getElementById('mic-toggle-btn');
       const label = document.getElementById('mic-label');
@@ -878,18 +1336,14 @@
             label.innerText = "MIC ON";
             if (conn) conn.send({ type: 'peer-mic-status', muted: false });
           } else {
-            alert("Microphone not available or permission denied.");
+            alert("Microphone not available.");
           }
         });
         return;
       }
 
       isMicMuted = !isMicMuted;
-
-      // Hardware level transmission mute
-      localStream.getAudioTracks().forEach(track => {
-        track.enabled = !isMicMuted;
-      });
+      localStream.getAudioTracks().forEach(track => track.enabled = !isMicMuted);
 
       if (isMicMuted) {
         btn.className = "ff-voice-btn muted";
@@ -901,13 +1355,11 @@
         label.innerText = "MIC ON";
       }
 
-      // Tell peer to silence incoming audio buffer completely if muted
       if (conn && conn.open) {
         conn.send({ type: 'peer-mic-status', muted: isMicMuted });
       }
     }
 
-    // 2. SONAR OPTION (SPEAKER ON / OFF)
     function toggleSpeaker() {
       const btn = document.getElementById('spk-toggle-btn');
       const label = document.getElementById('spk-label');
@@ -915,11 +1367,7 @@
       const remoteAudio = document.getElementById('remote-audio');
 
       isSpeakerMuted = !isSpeakerMuted;
-
-      // Locally mute/unmute the incoming friend audio
-      if (remoteAudio) {
-        remoteAudio.muted = isSpeakerMuted;
-      }
+      if (remoteAudio) remoteAudio.muted = isSpeakerMuted;
 
       if (isSpeakerMuted) {
         btn.className = "ff-voice-btn muted";
@@ -1078,7 +1526,6 @@
       scoreX = 0; scoreO = 0;
       updateScoreUI();
 
-      // Reset viewports
       document.getElementById('tictactoe-ui').style.display = 'none';
       document.getElementById('fourinrow-ui').style.display = 'none';
       document.getElementById('wordsearch-ui').style.display = 'none';
@@ -1094,7 +1541,6 @@
       if (data.type === 'peer-mic-status') {
         const remoteAudio = document.getElementById('remote-audio');
         if (remoteAudio && !isSpeakerMuted) {
-          // If friend muted his mic, silence his audio stream
           remoteAudio.muted = data.muted;
         }
       } else if (data.type === 'chat') {
@@ -1313,7 +1759,7 @@
       }
     }
 
-    /* ================= 2. FOUR IN A ROW (CONNECT 4) ================= */
+    /* ================= 2. FOUR IN A ROW ================= */
     const C4_ROWS = 6, C4_COLS = 7;
     let c4Grid = [];
     let c4Turn = 'X';
