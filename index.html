@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -62,6 +61,8 @@
       z-index: 100;
       transition: transform 0.2s ease;
     }
+
+    .selector-settings-btn:active { transform: scale(0.9) rotate(30deg); }
 
     .settings-row {
       display: flex;
@@ -352,15 +353,25 @@
       font-weight: 800;
       cursor: pointer;
       color: #fff;
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 8px;
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 4px;
+      transition: background 0.2s ease, transform 0.1s ease;
     }
 
-    .ff-voice-btn.active { background: #10b981; }
-    .ff-voice-btn.muted { background: #ef4444; }
+    .ff-voice-btn:active { transform: scale(0.95); }
+
+    /* Strict Colors: Active = Green, Muted = Red */
+    .ff-voice-btn.active { 
+      background: #10b981 !important; 
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+    .ff-voice-btn.muted { 
+      background: #ef4444 !important; 
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    }
 
     .room-header {
       background: rgba(22, 10, 48, 0.85);
@@ -394,7 +405,7 @@
     }
     .start-btn:disabled { background: #334155; color: #64748b; }
 
-    /* ---------------- IN-GAME ARENA (FULL RESPONSIVE & SCROLLABLE) ---------------- */
+    /* ---------------- IN-GAME ARENA ---------------- */
     #game-screen {
       background: radial-gradient(circle at center, #180d38 0%, #060214 85%);
       padding: 10px 8px 30px;
@@ -434,7 +445,6 @@
     .x-color { color: #00f0ff; }
     .o-color { color: #ff0055; }
 
-    /* Compact Responsive Canvas Viewport */
     .game-viewport {
       width: 100%;
       max-width: 380px;
@@ -447,7 +457,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      touch-action: none; /* Prevents whole screen scrolling while drawing dots */
+      touch-action: none;
     }
 
     #game-canvas {
@@ -457,7 +467,6 @@
       touch-action: none;
     }
 
-    /* 4 In a Row */
     .c4-board {
       display: grid;
       grid-template-columns: repeat(7, 36px);
@@ -476,7 +485,6 @@
     .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 8px #00f0ff; }
     .c4-cell.red { background: #ff0055; box-shadow: 0 0 8px #ff0055; }
 
-    /* Tic Tac Toe */
     .tictac-board {
       display: grid;
       grid-template-columns: repeat(3, 75px);
@@ -498,7 +506,6 @@
     .cell.x { color: #00f0ff; }
     .cell.o { color: #ff0055; }
 
-    /* Word Search */
     .ws-container { display: flex; flex-direction: column; align-items: center; width: 100%; height: 100%; padding: 6px; }
     .ws-grid { display: grid; grid-template-columns: repeat(7, 32px); grid-template-rows: repeat(7, 32px); gap: 3px; }
     .ws-cell {
@@ -786,6 +793,17 @@
     </div>
   </div>
 
+  <!-- QR JOIN NICKNAME WOOD MODAL (Wood Carved Aesthetic) -->
+  <div id="qr-nick-modal" class="modal-overlay">
+    <div class="wood-card" style="max-width:350px;">
+      <div class="wood-carved-title" style="font-size:22px;">PLAYER PROFILE</div>
+      <div class="sub-title">ENTER YOUR BATTLE NICKNAME</div>
+      <input type="text" id="qr-guest-nickname" class="wood-input" placeholder="Nickname (e.g. YD PRO)" maxlength="12" />
+      <button class="wood-btn" onclick="confirmQrNickJoin()">ENTER ARENA ⚔️</button>
+      <button class="wood-btn" style="background:#55280e; margin-bottom:0;" onclick="closeQrNickModal()">Cancel</button>
+    </div>
+  </div>
+
   <!-- 2. LOBBY SCREEN -->
   <div id="room-lobby-screen" class="screen">
     <div class="voice-controls" style="margin-bottom: 10px;">
@@ -869,7 +887,6 @@
         <div class="ws-grid" id="ws-grid-board"></div>
       </div>
 
-      <!-- Compact 5x5 Dots and Boxes Canvas -->
       <canvas id="game-canvas" width="340" height="320" style="display:none;"></canvas>
     </div>
 
@@ -978,7 +995,7 @@
     function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
     function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    /* ================= REAL-TIME ONLINE SYSTEM (PEER-TO-PEER DATA CHANNEL) ================= */
+    /* ================= REAL-TIME ONLINE SYSTEM ================= */
     let isStatusUnlocked = false;
     let userIpAddress = "Checking...";
     let peerPresenceInfo = null;
@@ -1220,7 +1237,6 @@
     let claimedKey = "";
     let raindrops = [];
     let stars = [];
-    let lightningFlash = 0;
 
     function startGetKeyWorkflow() {
       currentTaskStep = 1;
@@ -1340,9 +1356,31 @@
       updateVoiceButtonsUI();
     }
 
+    /* Voice Buttons UI Update (Mic & Speaker Color / Text Fix) */
     function updateVoiceButtonsUI() {
       const micBtns = [document.getElementById('mic-toggle-btn'), document.getElementById('lobby-mic-btn')];
-      micBtns.forEach(btn => { if (btn) btn.className = isMicMuted ? "ff-voice-btn muted" : "ff-voice-btn active"; });
+      const micIcons = [document.getElementById('mic-icon'), document.getElementById('lobby-mic-icon')];
+      const micLabels = [document.getElementById('mic-label'), document.getElementById('lobby-mic-label')];
+
+      const spkBtns = [document.getElementById('spk-toggle-btn'), document.getElementById('lobby-spk-btn')];
+      const spkIcons = [document.getElementById('spk-icon'), document.getElementById('lobby-spk-icon')];
+      const spkLabels = [document.getElementById('spk-label'), document.getElementById('lobby-spk-label')];
+
+      // Update Mic UI
+      micBtns.forEach((btn, i) => {
+        if (!btn) return;
+        btn.className = isMicMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
+        if (micIcons[i]) micIcons[i].innerText = isMicMuted ? "🔇" : "🎙️";
+        if (micLabels[i]) micLabels[i].innerText = isMicMuted ? "MIC OFF" : "MIC ON";
+      });
+
+      // Update Speaker UI (Fixed: Now switches to Red on mute)
+      spkBtns.forEach((btn, i) => {
+        if (!btn) return;
+        btn.className = isSpeakerMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
+        if (spkIcons[i]) spkIcons[i].innerText = isSpeakerMuted ? "❌" : "🎧";
+        if (spkLabels[i]) spkLabels[i].innerText = isSpeakerMuted ? "HEAR OFF" : "HEAR ON";
+      });
     }
 
     function toggleMic() {
@@ -1362,6 +1400,7 @@
       isSpeakerMuted = !isSpeakerMuted;
       const remoteAudio = document.getElementById('remote-audio');
       if (remoteAudio) remoteAudio.muted = isSpeakerMuted;
+      updateVoiceButtonsUI(); // Trigger UI state change immediately
     }
 
     function send3DEmoji(emoji) {
@@ -1464,6 +1503,7 @@
       }
       broadcastPresenceToPeer();
       updatePresenceUI();
+      updateVoiceButtonsUI();
     }
 
     function selectGame(mode) {
@@ -1504,7 +1544,7 @@
       qrScanner = new Html5Qrcode("qr-reader");
       qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 200 }, (t) => {
         stopQrScanner();
-        handleQrDirectJoin(t);
+        promptQrNickname(t);
       }, () => {}).catch(() => stopQrScanner());
     }
 
@@ -1513,11 +1553,31 @@
       else { document.getElementById('scanner-modal').style.display = 'none'; }
     }
 
-    async function handleQrDirectJoin(qrDataString) {
+    /* Wood Theme QR Nickname Prompt */
+    let tempScannedQrData = null;
+    function promptQrNickname(qrDataString) {
+      tempScannedQrData = qrDataString;
+      document.getElementById('qr-nick-modal').style.display = 'flex';
+      document.getElementById('qr-guest-nickname').value = '';
+      setTimeout(() => document.getElementById('qr-guest-nickname').focus(), 100);
+    }
+
+    function closeQrNickModal() {
+      document.getElementById('qr-nick-modal').style.display = 'none';
+      tempScannedQrData = null;
+    }
+
+    function confirmQrNickJoin() {
+      const nick = document.getElementById('qr-guest-nickname').value.trim();
+      if (!nick) return alert("Please enter your nickname!");
+      closeQrNickModal();
+      handleQrDirectJoin(tempScannedQrData, nick);
+    }
+
+    async function handleQrDirectJoin(qrDataString, nick) {
       try {
         const payload = JSON.parse(qrDataString);
-        const name = prompt("Enter Nickname:") || "Guest";
-        myName = name.trim();
+        myName = nick;
         myRole = 'O';
         await initMicrophone();
         peer = new Peer();
@@ -1743,7 +1803,6 @@
         };
       }
 
-      // Pointer & Touch Events
       canvas.onpointerdown = (e) => {
         if (!gameActive || dbTurn !== myRole) return;
         canvas.setPointerCapture(e.pointerId);
@@ -1859,7 +1918,6 @@
 
       const { startX, startY, gap } = getGridMetrics();
 
-      // Boxes
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           if (dbBoxes[r][c]) {
@@ -1872,7 +1930,6 @@
         }
       }
 
-      // H Lines
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
           ctx.strokeStyle = hLines[r][c] ? (hLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1881,7 +1938,6 @@
         }
       }
 
-      // V Lines
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           ctx.strokeStyle = vLines[r][c] ? (vLines[r][c] === 'X' ? '#00f0ff' : '#ff0055') : 'rgba(168, 85, 247, 0.25)';
@@ -1890,7 +1946,6 @@
         }
       }
 
-      // Dots
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           const isSelected = dragStartDot && dragStartDot.r === r && dragStartDot.c === c;
