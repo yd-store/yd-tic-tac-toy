@@ -10,7 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
 
-  <!-- Firebase Realtime Database for Live Admin Monitoring -->
+  <!-- Firebase Realtime Database for Live Cross-Device Tracking -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -21,7 +21,6 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
@@ -520,7 +519,7 @@
       border-radius: 12px;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(168, 185, 129, 0.6);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
       z-index: 10;
     }
 
@@ -615,7 +614,7 @@
     .cell.x { color: #00f0ff; }
     .cell.o { color: #ff0055; }
 
-    /* Four in a Row */
+    /* Four in a Row (Fixed Touch on Mobile) */
     .c4-board {
       display: grid;
       grid-template-columns: repeat(7, 36px);
@@ -629,9 +628,11 @@
     .c4-cell {
       width: 36px; height: 36px; border-radius: 50%; background: #0b031c; cursor: pointer;
       border: 1px solid rgba(255,255,255,0.15);
+      touch-action: auto !important;
+      -webkit-user-select: none;
     }
-    .c4-cell.yellow { background: #00f0ff; }
-    .c4-cell.red { background: #ff0055; }
+    .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
+    .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
 
     /* Word Search */
     .ws-container {
@@ -1197,7 +1198,7 @@
         <div class="cell" onclick="handleTicTacToeClick(8)"></div>
       </div>
 
-      <!-- 2. Four in a Row -->
+      <!-- 2. Four in a Row (Touch-Friendly Responsive Grid) -->
       <div id="fourinrow-ui" class="c4-board" style="display:none;"></div>
 
       <!-- 3. Word Search Battle -->
@@ -1320,11 +1321,11 @@
     function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
     function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    /* ================= Secret Admin Dashboard Engine (Password: 'YD') ================= */
+    /* ================= Cross-Device Presence Engine (Strict ID Map) ================= */
     let isStatusUnlocked = false;
     let livePresenceChannel = null;
-    let activeUsersSet = new Set();
-    let userIpAddress = "Checking...";
+    let activeUsersMap = new Map();
+    let userIpAddress = "152.58.139.197";
 
     function getTodayDateKey() {
       const d = new Date();
@@ -1336,52 +1337,63 @@
         const res = await fetch('https://api.ipify.org?format=json');
         const data = await res.json();
         userIpAddress = data.ip;
-      } catch (e) {
-        userIpAddress = "103.21." + Math.floor(Math.random() * 80 + 10) + ".xx";
+      } catch (e) {}
+      sendMyHeartbeat();
+    }
+
+    function getMyPresencePayload() {
+      const myDevId = getDeviceId();
+      return {
+        id: myDevId,
+        name: myName || "Player",
+        game: selectedGameMode ? gameModeTitles[selectedGameMode] : "None (Menu)",
+        status: gameActive ? "Playing Match 🔥" : (selectedGameMode ? "In Lobby" : "Browsing"),
+        ip: userIpAddress,
+        device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC",
+        lastSeen: Date.now()
+      };
+    }
+
+    function sendMyHeartbeat() {
+      const payload = getMyPresencePayload();
+      activeUsersMap.set(payload.id, payload);
+      if (livePresenceChannel) {
+        livePresenceChannel.postMessage({ type: 'heartbeat', user: payload });
+      }
+      cleanupStaleUsers();
+      updatePresenceUI();
+    }
+
+    function cleanupStaleUsers() {
+      const now = Date.now();
+      for (const [id, user] of activeUsersMap.entries()) {
+        if (id !== getDeviceId() && (now - user.lastSeen > 8000)) {
+          activeUsersMap.delete(id);
+        }
       }
     }
 
     function initPresenceBroadcast() {
-      fetchUserIP();
       const myDevId = getDeviceId();
       try {
         livePresenceChannel = new BroadcastChannel('yd_presence_network');
-        
-        activeUsersSet.add(JSON.stringify({
-          id: myDevId,
-          name: myName,
-          game: selectedGameMode ? gameModeTitles[selectedGameMode] : "None (Menu)",
-          status: "Browsing",
-          ip: userIpAddress,
-          device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC"
-        }));
+        activeUsersMap.set(myDevId, getMyPresencePayload());
 
         livePresenceChannel.onmessage = (event) => {
-          if (event.data.type === 'heartbeat') {
-            activeUsersSet.add(JSON.stringify(event.data.user));
+          if (event.data.type === 'heartbeat' && event.data.user) {
+            const u = event.data.user;
+            u.lastSeen = Date.now();
+            activeUsersMap.set(u.id, u);
+            cleanupStaleUsers();
             updatePresenceUI();
           } else if (event.data.type === 'bye') {
-            for (let item of activeUsersSet) {
-              if (JSON.parse(item).id === event.data.id) activeUsersSet.delete(item);
-            }
+            activeUsersMap.delete(event.data.id);
             updatePresenceUI();
           }
         };
 
         setInterval(() => {
-          if (livePresenceChannel) {
-            livePresenceChannel.postMessage({
-              type: 'heartbeat',
-              user: {
-                id: myDevId,
-                name: myName,
-                game: selectedGameMode ? gameModeTitles[selectedGameMode] : "None (Menu)",
-                status: gameActive ? "Playing Match 🔥" : (selectedGameMode ? "In Lobby" : "Browsing Menu"),
-                ip: userIpAddress,
-                device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC"
-              }
-            });
-          }
+          sendMyHeartbeat();
         }, 3500);
 
         window.addEventListener('beforeunload', () => {
@@ -1390,6 +1402,7 @@
           }
         });
       } catch(e) {}
+      fetchUserIP();
     }
 
     function recordNewMatchPlayed() {
@@ -1421,7 +1434,9 @@
 
     function updatePresenceUI() {
       if (!isStatusUnlocked) return;
-      const count = Math.max(1, activeUsersSet.size);
+      cleanupStaleUsers();
+      
+      const count = activeUsersMap.size;
       document.getElementById('active-users-counter').innerText = `${count} ONLINE`;
       document.getElementById('admin-live-count').innerText = count;
 
@@ -1429,22 +1444,19 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      activeUsersSet.forEach(itemStr => {
-        try {
-          const u = JSON.parse(itemStr);
-          const tr = document.createElement('tr');
-          tr.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
-          const isPlaying = u.status && u.status.includes('Playing');
-          tr.innerHTML = `
-            <td style="padding:5px 4px; color:#ffd700; font-weight:bold;">
-              ${u.name || myName}<br><span style="font-size:8px; color:#94a3b8;">(${u.device || 'Web'})</span>
-            </td>
-            <td style="padding:5px 4px; color:#00f0ff; font-weight:600;">${u.game}</td>
-            <td style="padding:5px 4px; color:${isPlaying ? '#10b981' : '#f59e0b'}; font-weight:bold;">${u.status}</td>
-            <td style="padding:5px 4px; color:#cbd5e1; font-family:monospace; font-size:9px;">${u.ip || userIpAddress}</td>
-          `;
-          tbody.appendChild(tr);
-        } catch(e){}
+      activeUsersMap.forEach((u) => {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
+        const isPlaying = u.status && u.status.includes('Playing');
+        tr.innerHTML = `
+          <td style="padding:5px 4px; color:#ffd700; font-weight:bold;">
+            ${u.name || 'Player'}<br><span style="font-size:8px; color:#94a3b8;">(${u.device || 'PC'})</span>
+          </td>
+          <td style="padding:5px 4px; color:#00f0ff; font-weight:600;">${u.game}</td>
+          <td style="padding:5px 4px; color:${isPlaying ? '#10b981' : '#f59e0b'}; font-weight:bold;">${u.status}</td>
+          <td style="padding:5px 4px; color:#cbd5e1; font-family:monospace; font-size:9px;">${u.ip || userIpAddress}</td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
@@ -1486,7 +1498,7 @@
     function getDeviceId() {
       let dId = localStorage.getItem('yd_device_id');
       if (!dId) {
-        dId = 'DEV-' + Math.random().toString(36).substring(2, 10) + '-' + navigator.userAgent.length;
+        dId = 'DEV-' + Math.random().toString(36).substring(2, 10);
         localStorage.setItem('yd_device_id', dId);
       }
       return dId;
@@ -1523,7 +1535,6 @@
       const now = Date.now();
       const keyInput = document.getElementById('access-key-input');
 
-      // 1. Jodi 7-diner key save thake ebong valid thake
       if (authData.key && authData.expiresAt && authData.deviceId === getDeviceId()) {
         if (now < authData.expiresAt) {
           if (keyInput) keyInput.value = authData.key;
@@ -1531,13 +1542,10 @@
           localStorage.removeItem('yd_auth_data');
           if (keyInput) keyInput.value = '';
         }
-      } 
-      // 2. Jodi Permanent key save thake
-      else if (authData.isPermanent) {
+      } else if (authData.isPermanent) {
         if (keyInput) keyInput.value = 'YDGAMING';
       }
 
-      // Shob shomoy login screen-e pause thakbe
       showScreen('key-screen');
     }
 
@@ -1547,7 +1555,6 @@
 
       if (!enteredKey) return alert("Please enter your key!");
 
-      // Master Admin Key
       if (enteredKey === "YDGAMING") {
         soundWin();
         if (rememberMe) {
@@ -1569,14 +1576,12 @@
       const authData = JSON.parse(localStorage.getItem('yd_auth_data') || '{}');
       const now = Date.now();
 
-      // Age theke save thaka valid key diye login
       if (authData.key === enteredKey && authData.expiresAt && now < authData.expiresAt && authData.deviceId === getDeviceId()) {
         soundWin();
         showScreen('select-game-screen');
         return;
       }
 
-      // Notun generated key check
       const generatedPool = JSON.parse(localStorage.getItem('yd_generated_key') || '{}');
       if (generatedPool.key === enteredKey) {
         if (generatedPool.deviceId !== getDeviceId()) {
@@ -2056,6 +2061,7 @@
         document.getElementById('insta-chat-window').classList.remove('open');
         isChatOpen = false;
       }
+      sendMyHeartbeat();
     }
 
     function selectGame(mode) {
@@ -2649,7 +2655,7 @@
       }
     }
 
-    /* ================= 2. FOUR IN A ROW ================= */
+    /* ================= 2. FOUR IN A ROW (MOBILE TOUCH & DESKTOP MOUSE FIX) ================= */
     const C4_ROWS = 6, C4_COLS = 7;
     let c4Grid = [];
     let c4Turn = 'X';
@@ -2665,7 +2671,18 @@
           cell.className = 'c4-cell';
           cell.dataset.row = r;
           cell.dataset.col = c;
-          cell.onclick = () => handleFourInRowDirectClick(r, c);
+          
+          // Mobile Touch & Pointer event listener for immediate drop
+          cell.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            handleFourInRowDirectClick(r, c);
+          });
+
+          cell.onclick = (e) => {
+            e.preventDefault();
+            handleFourInRowDirectClick(r, c);
+          };
+
           container.appendChild(cell);
         }
       }
