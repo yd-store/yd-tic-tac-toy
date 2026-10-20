@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>YD GAME HUB - 3D 1v1 Battle Arena</title>
+
+  <link rel="manifest" href="/manifest.json">
   
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -352,24 +354,23 @@
       font-weight: 800;
       cursor: pointer;
       color: #fff;
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 8px;
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: background 0.2s ease, transform 0.1s ease;
+      transition: all 0.2s ease;
     }
 
     .ff-voice-btn:active { transform: scale(0.95); }
 
-    /* Strict Colors: Active = Green, Muted = Red */
     .ff-voice-btn.active { 
       background: #10b981 !important; 
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
     }
     .ff-voice-btn.muted { 
       background: #ef4444 !important; 
-      box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
     }
 
     .room-header {
@@ -404,7 +405,6 @@
     }
     .start-btn:disabled { background: #334155; color: #64748b; }
 
-    /* ---------------- IN-GAME ARENA ---------------- */
     #game-screen {
       background: radial-gradient(circle at center, #180d38 0%, #060214 85%);
       padding: 10px 8px 30px;
@@ -994,7 +994,6 @@
     function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
     function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    /* ================= REAL-TIME ONLINE SYSTEM ================= */
     let isStatusUnlocked = false;
     let userIpAddress = "Checking...";
     let peerPresenceInfo = null;
@@ -1062,7 +1061,6 @@
       if (!tbody) return;
       tbody.innerHTML = '';
 
-      // Me
       const myRow = document.createElement('tr');
       myRow.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
       myRow.innerHTML = `
@@ -1075,7 +1073,6 @@
       `;
       tbody.appendChild(myRow);
 
-      // Connected Peer (Mobile or Laptop)
       if (conn && conn.open && peerPresenceInfo) {
         const peerRow = document.createElement('tr');
         peerRow.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
@@ -1229,7 +1226,6 @@
       }
     }
 
-    /* 5-Step Verification System */
     let currentTaskStep = 1;
     let taskTimer = null;
     let fxAnimId = null;
@@ -1355,7 +1351,6 @@
       updateVoiceButtonsUI();
     }
 
-    /* Fixed Mic & Speaker Button Classes & Styling */
     function updateVoiceButtonsUI() {
       const micBtns = [document.getElementById('mic-toggle-btn'), document.getElementById('lobby-mic-btn')];
       const micIcons = [document.getElementById('mic-icon'), document.getElementById('lobby-mic-icon')];
@@ -1550,7 +1545,6 @@
       else { document.getElementById('scanner-modal').style.display = 'none'; }
     }
 
-    /* Wood Theme QR Nickname Prompt */
     let tempScannedQrData = null;
     function promptQrNickname(qrDataString) {
       tempScannedQrData = qrDataString;
@@ -1571,55 +1565,71 @@
       handleQrDirectJoin(tempScannedQrData, nick);
     }
 
-    /* Reliable QR Direct Join Logic */
+    /* Fixed Clean QR String Parser */
     async function handleQrDirectJoin(qrDataString, nick) {
+      let rCode = "";
+      let sToken = "";
+      let gMode = "dotsboxes";
+
       try {
-        const payload = JSON.parse(qrDataString);
-        if (!payload.roomCode) return alert("Invalid QR Code!");
+        if (qrDataString.startsWith('{')) {
+          const payload = JSON.parse(qrDataString);
+          rCode = payload.roomCode;
+          sToken = payload.secretToken;
+          gMode = payload.gameMode || "dotsboxes";
+        } else if (qrDataString.includes('|')) {
+          const parts = qrDataString.split('|');
+          rCode = parts[0];
+          sToken = parts[1];
+          gMode = parts[2] || "dotsboxes";
+        } else {
+          rCode = qrDataString.trim();
+        }
+      } catch(e) {
+        rCode = qrDataString.trim();
+      }
 
-        myName = nick || "Guest";
-        myRole = 'O';
-        selectedGameMode = payload.gameMode || selectedGameMode;
-        tempCode = payload.roomCode;
-        roomCode = payload.roomCode;
+      if (!rCode) return alert("Invalid QR Code content!");
 
-        await initMicrophone();
-        if (peer) { try { peer.destroy(); } catch(e){} }
+      myName = nick || "Guest";
+      myRole = 'O';
+      selectedGameMode = gMode;
+      roomCode = rCode;
 
-        peer = new Peer();
-        peer.on('open', () => {
-          conn = peer.connect(roomCode, { reliable: true });
+      await initMicrophone();
+      if (peer) { try { peer.destroy(); } catch(e){} }
 
-          conn.on('open', () => {
-            document.getElementById('lobby-code-display').innerText = roomCode;
-            document.getElementById('slot2-name').innerText = myName;
-            document.getElementById('slot-2').className = 'slot-card occupied-o';
-            document.getElementById('guest-auth-box').style.display = 'none';
-            document.getElementById('slot2-status').innerText = 'CONNECTING...';
-            showScreen('room-lobby-screen');
+      peer = new Peer();
+      peer.on('open', () => {
+        conn = peer.connect(roomCode, { reliable: true });
 
-            // Send handshake to host
-            conn.send({
-              type: 'auth-request',
-              password: payload.secretToken,
-              name: myName,
-              gameMode: payload.gameMode,
-              isDirectQr: true
-            });
+        conn.on('open', () => {
+          document.getElementById('lobby-code-display').innerText = roomCode;
+          document.getElementById('slot2-name').innerText = myName;
+          document.getElementById('slot-2').className = 'slot-card occupied-o';
+          document.getElementById('guest-auth-box').style.display = 'none';
+          document.getElementById('slot2-status').innerText = 'READY (Player 2)';
+          showScreen('room-lobby-screen');
+
+          conn.send({
+            type: 'auth-request',
+            password: sToken,
+            name: myName,
+            gameMode: gMode,
+            isDirectQr: true
           });
-
-          conn.on('data', (data) => routeInGameData(data));
-          conn.on('close', () => { terminateVoiceChat(); alert("Disconnected!"); backToMenu(); });
-          conn.on('error', (err) => alert("Connection error: " + err));
         });
 
-        peer.on('call', (call) => {
-          activeCall = call;
-          call.answer(localStream || undefined);
-          call.on('stream', s => { document.getElementById('remote-audio').srcObject = s; });
-        });
+        conn.on('data', (data) => routeInGameData(data));
+        conn.on('close', () => { terminateVoiceChat(); alert("Disconnected!"); backToMenu(); });
+        conn.on('error', (err) => alert("Connection error: " + err));
+      });
 
-      } catch(e) { alert("Invalid YD Game QR Code scan!"); }
+      peer.on('call', (call) => {
+        activeCall = call;
+        call.answer(localStream || undefined);
+        call.on('stream', s => { document.getElementById('remote-audio').srcObject = s; });
+      });
     }
 
     async function submitCreateRoom() {
@@ -1641,7 +1651,10 @@
         document.getElementById('slot1-name').innerText = myName;
         const qrContainer = document.getElementById('qrcode-box');
         qrContainer.innerHTML = '';
-        new QRCode(qrContainer, { text: JSON.stringify({ type: 'yd-room', roomCode: id, secretToken: roomPassword, gameMode: selectedGameMode }), width: 110, height: 110 });
+        
+        // Pipe formatted string: 100% stable across all QR scanners
+        const qrContent = `${id}|${roomPassword}|${selectedGameMode}`;
+        new QRCode(qrContainer, { text: qrContent, width: 110, height: 110 });
         showScreen('room-lobby-screen');
       });
 
@@ -1649,7 +1662,6 @@
         conn = connection;
         conn.on('data', (data) => {
           if (data.type === 'auth-request') {
-            // Direct QR verification bypasses strict password prompt mismatch
             if (data.password === roomPassword || data.isDirectQr) {
               peerName = data.name;
               selectedGameMode = data.gameMode || selectedGameMode;
@@ -1754,7 +1766,7 @@
         document.getElementById('guest-auth-box').style.display = 'none';
         document.getElementById('slot2-status').innerText = 'WAITING FOR HOST TO START...';
         if (localStream) {
-          activeCall = peer.call(tempCode || roomCode, localStream);
+          activeCall = peer.call(roomCode, localStream);
           activeCall.on('stream', s => { document.getElementById('remote-audio').srcObject = s; });
         }
         broadcastPresenceToPeer();
@@ -1805,7 +1817,7 @@
       else if (selectedGameMode === 'tictactoe') resetTicTacToe();
     }
 
-    /* ================= 1. DOTS & BOXES ================= */
+    /* Dots & Boxes */
     const DB_GRID = 5;
     let hLines = [], vLines = [], dbBoxes = [];
     let dbTurn = 'X';
@@ -1994,7 +2006,7 @@
       }
     }
 
-    /* ================= 2. FOUR IN A ROW ================= */
+    /* Four in a Row */
     const C4_ROWS = 6, C4_COLS = 7;
     let c4Grid = [];
     let c4Turn = 'X';
@@ -2084,7 +2096,7 @@
       }
     }
 
-    /* ================= 3. WORD SEARCH BATTLE ================= */
+    /* Word Search */
     const WORD_LIST = ["FIRE", "CODE", "CYBER", "NEON", "GAME", "ROOM"];
     let wsGridData = [];
     let currentTargetWord = "FIRE";
@@ -2171,7 +2183,7 @@
       }
     }
 
-    /* ================= 4. TIC TAC TOE ================= */
+    /* Tic Tac Toe */
     let tttBoard = Array(9).fill(null);
     let tttTurn = 'X';
 
