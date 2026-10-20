@@ -4,7 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>YD GAME HUB - 3D 1v1 Battle Arena</title>
+  
+  <!-- PeerJS, QR Generator & Camera Scanner Engines -->
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Firebase Realtime Database for Live Admin Monitoring -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
 
   <style>
@@ -37,6 +46,72 @@
       align-items: center;
       padding: 16px;
       position: relative;
+    }
+
+    /* ---------------- SETTINGS BUTTON ON GAME SELECTOR ---------------- */
+    .selector-settings-btn {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(45, 20, 80, 0.85);
+      border: 2px solid #a855f7;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+      z-index: 100;
+      transition: transform 0.2s ease;
+    }
+
+    .selector-settings-btn:active { transform: scale(0.9) rotate(30deg); }
+
+    /* ---------------- SETTINGS MODAL & ADMIN STYLES ---------------- */
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px 14px;
+      background: rgba(20, 10, 40, 0.85);
+      border-radius: 12px;
+      border: 1px solid #8d5b37;
+    }
+
+    .settings-slider-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px 14px;
+      background: rgba(20, 10, 40, 0.85);
+      border-radius: 12px;
+      border: 1px solid #8d5b37;
+    }
+
+    .slider-input {
+      width: 100%;
+      accent-color: #ffd700;
+      cursor: pointer;
+    }
+
+    .active-status-badge {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      font-weight: 800;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.15);
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid #10b981;
+      display: none;
     }
 
     /* ---------------- 00. 15-SEC WOOD LOADING SCREEN ---------------- */
@@ -122,7 +197,7 @@
       border: 3px solid #8d5b37;
       border-radius: 20px;
       box-shadow: 0 15px 35px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.2);
-      padding: 26px 20px;
+      padding: 24px 20px;
       max-width: 400px;
       width: 100%;
       text-align: center;
@@ -133,8 +208,8 @@
 
     .wood-btn {
       width: 100%;
-      padding: 13px;
-      font-size: 14px;
+      padding: 12px;
+      font-size: 13px;
       font-weight: 800;
       color: #fff;
       background: linear-gradient(180deg, #b86b32, #7a3e12);
@@ -143,13 +218,13 @@
       cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 1px;
-      box-shadow: 0 5px 0 #4a2408;
+      box-shadow: 0 4px 0 #4a2408;
       transition: transform 0.1s ease;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .wood-btn:hover { background: linear-gradient(180deg, #cf7d3d, #8f4b18); }
-    .wood-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #4a2408; }
+    .wood-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a2408; }
 
     .wood-input {
       width: 100%;
@@ -174,7 +249,7 @@
       gap: 8px;
       font-size: 12px;
       color: #fbd38d;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       cursor: pointer;
     }
 
@@ -309,29 +384,58 @@
       background: radial-gradient(circle at center, #1b0f38 0%, #08031a 90%);
     }
 
+    .voice-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(22, 10, 48, 0.95);
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid #a855f7;
+    }
+
+    .ff-voice-btn {
+      border: none;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .ff-voice-btn.active { background: #10b981; }
+    .ff-voice-btn.muted { background: #ef4444; }
+
     .room-header {
       background: rgba(22, 10, 48, 0.85);
       border: 2px solid #a855f7;
       border-radius: 14px;
-      padding: 12px 20px;
+      padding: 10px 18px;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
       z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .room-header h2 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
-      color: #ff007f;
-      letter-spacing: 1.5px;
+    .qr-container {
+      background: #fff;
+      padding: 8px;
+      border-radius: 12px;
+      margin: 8px 0;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
     }
 
     .room-code-tag {
       font-family: 'Orbitron', monospace;
-      font-size: 18px;
+      font-size: 17px;
       color: #00f0ff;
-      margin-top: 5px;
       cursor: pointer;
       text-decoration: underline;
     }
@@ -339,7 +443,7 @@
     .slots-container {
       display: flex;
       gap: 15px;
-      margin-bottom: 25px;
+      margin-bottom: 15px;
       width: 100%;
       max-width: 440px;
       z-index: 10;
@@ -347,7 +451,7 @@
 
     .slot-card {
       flex: 1;
-      min-height: 170px;
+      min-height: 150px;
       border-radius: 16px;
       background: rgba(20, 10, 40, 0.75);
       border: 2px dashed #6b21a8;
@@ -355,7 +459,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: 8px;
       position: relative;
     }
 
@@ -373,49 +477,42 @@
 
     .slot-number {
       position: absolute;
-      top: 8px;
+      top: 6px;
       left: 8px;
-      font-size: 10px;
+      font-size: 9px;
       color: #a855f7;
       font-family: 'Orbitron', sans-serif;
       font-weight: 800;
     }
 
     .slot-avatar {
-      width: 50px;
-      height: 50px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: #11052c;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
-      margin-bottom: 8px;
+      font-size: 20px;
+      margin-bottom: 6px;
       border: 2px solid #8b5cf6;
     }
 
     .slot-name {
       font-family: 'Orbitron', sans-serif;
       font-weight: 700;
-      font-size: 13px;
+      font-size: 12px;
       color: #fff;
       text-align: center;
       word-break: break-all;
     }
 
-    .slot-status {
-      font-size: 10px;
-      color: #94a3b8;
-      margin-top: 4px;
-      text-align: center;
-    }
-
     .start-btn {
       width: 100%;
       max-width: 320px;
-      padding: 13px;
+      padding: 12px;
       font-family: 'Orbitron', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 900;
       letter-spacing: 2px;
       background: linear-gradient(135deg, #10b981, #047857);
@@ -423,7 +520,7 @@
       border-radius: 12px;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 20px rgba(168, 185, 129, 0.6);
       z-index: 10;
     }
 
@@ -450,40 +547,6 @@
       z-index: 10;
     }
 
-    .voice-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(22, 10, 48, 0.95);
-      padding: 5px 10px;
-      border-radius: 20px;
-      border: 1px solid #a855f7;
-    }
-
-    .ff-voice-btn {
-      border: none;
-      font-size: 11px;
-      font-weight: 800;
-      cursor: pointer;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-      transition: all 0.2s ease;
-    }
-
-    .ff-voice-btn.active {
-      background: #10b981;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-    }
-
-    .ff-voice-btn.muted {
-      background: #ef4444;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
-    }
-
     .score-board {
       display: flex;
       align-items: center;
@@ -505,7 +568,6 @@
       min-width: 100px;
     }
 
-    .score-card.active-turn { border-color: #fff; box-shadow: 0 0 12px #fff; }
     .score-card.x-side { border-color: #00f0ff; }
     .score-card.o-side { border-color: #ff0055; }
     .p-name { font-size: 11px; font-weight: 700; color: #cbd5e1; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -540,7 +602,7 @@
     }
     .cell {
       border-radius: 10px;
-      background: rgba(25, 12, 54, 0.9);
+      background: rgba(255, 255, 255, 0.05);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -550,10 +612,10 @@
       cursor: pointer;
       border: 1px solid rgba(176, 38, 255, 0.3);
     }
-    .cell.x { color: #00f0ff; text-shadow: 0 0 10px #00f0ff; }
-    .cell.o { color: #ff0055; text-shadow: 0 0 10px #ff0055; }
+    .cell.x { color: #00f0ff; }
+    .cell.o { color: #ff0055; }
 
-    /* Four in a Row (Direct Slot Placement) */
+    /* Four in a Row */
     .c4-board {
       display: grid;
       grid-template-columns: repeat(7, 36px);
@@ -567,11 +629,9 @@
     .c4-cell {
       width: 36px; height: 36px; border-radius: 50%; background: #0b031c; cursor: pointer;
       border: 1px solid rgba(255,255,255,0.15);
-      transition: all 0.15s;
     }
-    .c4-cell:hover { border-color: #00f0ff; }
-    .c4-cell.yellow { background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
-    .c4-cell.red { background: #ff0055; box-shadow: 0 0 10px #ff0055; }
+    .c4-cell.yellow { background: #00f0ff; }
+    .c4-cell.red { background: #ff0055; }
 
     /* Word Search */
     .ws-container {
@@ -581,13 +641,6 @@
       width: 100%;
       height: 100%;
       padding: 6px;
-    }
-    .ws-word-list {
-      font-size: 11px;
-      color: #38bdf8;
-      font-weight: bold;
-      margin-bottom: 4px;
-      letter-spacing: 1px;
     }
     .ws-grid {
       display: grid;
@@ -613,67 +666,265 @@
       min-height: 18px;
     }
 
-    .game-bottom-area {
+    /* 3D Floating Emojis */
+    .emoji-dock {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
       margin-top: 6px;
-      width: 100%;
-      max-width: 380px;
       z-index: 10;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
     }
 
-    .chat-box {
-      background: rgba(14, 5, 33, 0.9);
+    .emoji-btn {
+      background: rgba(30, 10, 65, 0.7);
       border: 1.5px solid #a855f7;
-      border-radius: 12px;
-      padding: 5px 8px;
-      height: 75px;
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      font-size: 20px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     }
 
-    .messages {
+    .emoji-btn:active { transform: scale(1.25); }
+
+    .flying-emoji-overlay {
+      position: fixed;
+      pointer-events: none;
+      font-size: 85px;
+      z-index: 99999;
+      animation: floatBlast 1.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8));
+    }
+
+    @keyframes floatBlast {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2) rotate(-20deg); }
+      30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
+      70% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(0deg); }
+      100% { opacity: 0; transform: translate(-50%, -160%) scale(0.8); }
+    }
+
+    /* ---------------- INSTAGRAM NATURE AESTHETIC CHAT (DEFAULT HIDDEN) ---------------- */
+    .chat-bubble-launcher {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a7f3d0, #6ee7b7);
+      border: 3px solid #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      cursor: pointer;
+      box-shadow: 0 8px 25px rgba(110, 231, 183, 0.6);
+      z-index: 9999;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .chat-bubble-launcher:active { transform: scale(0.92); }
+
+    .chat-unread-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+    }
+
+    .insta-chat-modal {
+      position: fixed;
+      bottom: 85px;
+      right: 18px;
+      width: 90vw;
+      max-width: 350px;
+      height: 460px;
+      border-radius: 26px;
+      background: linear-gradient(180deg, rgba(230, 247, 238, 0.95) 0%, rgba(187, 240, 209, 0.96) 60%, rgba(147, 219, 185, 0.98) 100%),
+                  url('https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=600&q=80') center/cover no-repeat;
+      border: 3px solid #a7f3d0;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.85);
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      transform-origin: bottom right;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .insta-chat-modal.open {
+      display: flex;
+      animation: expandChat 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes expandChat {
+      0% { opacity: 0; transform: scale(0.2) translate(80px, 80px); }
+      100% { opacity: 1; transform: scale(1) translate(0, 0); }
+    }
+
+    .insta-header {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(10px);
+      border-bottom: 1.5px solid rgba(255,255,255,0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .insta-header h3 {
+      font-size: 14px;
+      color: #064e3b;
+      font-weight: 800;
+    }
+
+    .insta-close-btn {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    }
+
+    .insta-messages {
       flex: 1;
       overflow-y: auto;
-      font-size: 11px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 10px;
     }
 
-    .msg { padding: 3px 6px; border-radius: 6px; max-width: 85%; word-break: break-word; }
-    .msg.me { background: rgba(0, 240, 255, 0.2); border: 1px solid #00f0ff; align-self: flex-end; color: #e0faff; }
-    .msg.peer { background: rgba(255, 0, 85, 0.2); border: 1px solid #ff0055; align-self: flex-start; color: #ffe4ec; }
+    .insta-bubble {
+      max-width: 80%;
+      padding: 9px 14px;
+      border-radius: 18px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      position: relative;
+      word-break: break-word;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+    }
 
-    .chat-input-row { display: flex; gap: 6px; margin-top: 4px; }
-    .chat-input-row input {
-      flex: 1;
-      background: rgba(30, 10, 65, 0.85);
-      border: 1px solid #a855f7;
-      border-radius: 6px;
+    .insta-bubble.me {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #10b981, #059669);
       color: #fff;
-      padding: 5px 8px;
-      font-size: 11px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .insta-bubble.peer {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.85);
+      color: #064e3b;
+      border-bottom-left-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.9);
+    }
+
+    .audio-msg-player {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .audio-msg-player audio {
+      height: 32px;
+      max-width: 180px;
+    }
+
+    .seen-label {
+      font-size: 9px;
+      color: #065f46;
+      align-self: flex-end;
+      margin-top: -6px;
+      margin-right: 6px;
+      font-weight: 700;
+    }
+
+    .insta-footer {
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.6);
+    }
+
+    .insta-footer input {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 20px;
+      border: 1.5px solid #6ee7b7;
+      background: #fff;
+      font-size: 12px;
+      color: #064e3b;
       outline: none;
     }
 
-    .action-btn {
-      width: 100%;
-      padding: 7px;
-      border-radius: 8px;
-      border: none;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
+    .insta-footer button {
+      background: #059669;
       color: #fff;
-      background: #8b5cf6;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .voice-record-btn {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .voice-record-btn.recording {
+      background: #ef4444;
+      animation: pulseRecord 1s infinite alternate;
+    }
+
+    @keyframes pulseRecord {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(239, 68, 68, 0.7); }
+      100% { transform: scale(1.15); box-shadow: 0 0 14px rgba(239, 68, 68, 1); }
     }
   </style>
 </head>
 <body>
 
-  <!-- Hidden Persistent Audio Stream Target -->
+  <!-- Audio Node for Remote WebRTC Stream -->
   <audio id="remote-audio" autoplay playsinline></audio>
 
   <!-- ================= 00. 15-SECOND LOADING SCREEN ================= -->
@@ -688,17 +939,17 @@
     </div>
   </div>
 
-  <!-- ================= 01. 24-HOUR KEY AUTH SCREEN ================= -->
+  <!-- ================= 01. 7-DAY KEY AUTH SCREEN ================= -->
   <div id="key-screen" class="screen">
     <div class="wood-card">
       <div class="wood-carved-title">YD ACCESS</div>
-      <div class="sub-title">24-HOUR SECURITY KEY</div>
+      <div class="sub-title">7-DAY SECURITY KEY</div>
       
       <input type="text" id="access-key-input" class="wood-input" placeholder="Paste Key (yd-xxxxxxxxxx)" />
       
       <label class="remember-row">
         <input type="checkbox" id="remember-key-chk" checked />
-        <span>Remember / Save Key (24 Hours)</span>
+        <span>Remember / Save Key (7 Days)</span>
       </label>
 
       <button class="wood-btn" onclick="submitAccessKey()">UNLOCK & ENTER</button>
@@ -708,28 +959,29 @@
     </div>
   </div>
 
-  <!-- ================= 02. 6-STEP ANIMATED TASK SCREEN ================= -->
+  <!-- ================= 02. 5-STEP ANIMATED TASK SCREEN ================= -->
   <div id="task-screen" class="screen">
     <canvas id="task-fx-canvas"></canvas>
 
     <div class="wood-card">
       <div class="wood-carved-title">TASK VERIFY</div>
-      <div class="sub-title" id="task-stage-title">STEP 1: TELEGRAM JOIN</div>
+      <div class="sub-title" id="task-stage-title">STEP 1: RAINSTORM ZONE 🌧️</div>
 
       <div class="task-step-box">
-        <div id="task-counter-text" class="task-counter">STEP 1 / 6</div>
-        <p id="task-desc" style="font-size: 12px; color: #fbd38d; margin-bottom: 10px;">Click below to join our official Telegram channel:</p>
-        
-        <div id="task-timer-text" style="font-family:'Orbitron'; font-size: 24px; color: #ffd700; font-weight: 900; letter-spacing: 1px; word-break: break-all;">OPEN</div>
+        <div id="task-counter-text" class="task-counter">STEP 1 / 5</div>
+        <p id="task-desc" style="font-size: 12px; color: #fbd38d; margin-bottom: 10px;">Security handshake in progress! Please wait 5 seconds...</p>
+        <div id="task-timer-text" style="font-family:'Orbitron'; font-size: 24px; color: #ffd700; font-weight: 900; letter-spacing: 1px; word-break: break-all;">5s</div>
       </div>
 
-      <button id="task-action-btn" class="wood-btn" onclick="handleTaskAction()">JOIN TELEGRAM</button>
+      <button id="task-action-btn" class="wood-btn" onclick="handleTaskAction()">WAITING...</button>
       <button class="wood-btn" style="background:#55280e; margin-bottom:0;" onclick="cancelTaskWorkflow()">CANCEL</button>
     </div>
   </div>
 
-  <!-- ================= 0. 3D LEVEL GAME SELECTOR ================= -->
+  <!-- ================= 0. 3D LEVEL GAME SELECTOR WITH SETTINGS ICON ================= -->
   <div id="select-game-screen" class="screen">
+    <button class="selector-settings-btn" onclick="openSettingsModal()" title="Game Settings">⚙️</button>
+
     <div class="arena-banner">
       <div class="wood-carved-title">YD GAME HUB</div>
       <div class="sub-title">CHOOSE YOUR ARENA</div>
@@ -755,13 +1007,80 @@
     </div>
   </div>
 
+  <!-- ================= SETTINGS & SECRET ADMIN DASHBOARD MODAL ================= -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="wood-card" style="max-width:370px;">
+      <h2 style="font-family:'Orbitron'; font-size:18px; margin-bottom:12px; color:#ffdda1;">ARENA SETTINGS</h2>
+
+      <!-- 1. Sound On/Off -->
+      <div class="settings-row">
+        <span style="font-size:13px; font-weight:700;">Sound Effects:</span>
+        <button class="wood-btn" id="modal-sound-btn" style="width:auto; margin:0; padding:6px 14px; font-size:11px;" onclick="toggleGlobalSound()">SOUND ON 🔊</button>
+      </div>
+
+      <!-- 2. Volume Slider -->
+      <div class="settings-slider-row">
+        <div style="display:flex; justify-content:space-between; width:100%; font-size:12px; font-weight:700;">
+          <span>Volume Control:</span>
+          <span id="volume-val-txt" style="color:#ffd700;">100%</span>
+        </div>
+        <input type="range" id="volume-slider" class="slider-input" min="0" max="100" value="100" oninput="handleVolumeChange(this.value)" />
+      </div>
+
+      <!-- 3. Active Users Status & Secret Admin Dashboard (Password: YD) -->
+      <div class="settings-row" style="flex-direction:column; align-items:flex-start; gap:8px;">
+        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+          <span style="font-size:13px; font-weight:700;">Active Users Status:</span>
+          <span class="active-status-badge" id="active-users-counter">0 ONLINE</span>
+        </div>
+        
+        <button class="wood-btn" id="unlock-active-btn" style="background:#0284c7; border-color:#38bdf8; margin:0; padding:7px 12px; font-size:11px;" onclick="promptAdminPassword()">
+          VIEW LIVE STATUS 🔒
+        </button>
+
+        <!-- Admin Dashboard Details (Unlocked with 'YD') -->
+        <div id="admin-user-list-container" style="display:none; width:100%; margin-top:8px;">
+          <!-- Live Matches Counter Grid -->
+          <div style="display:flex; gap:8px; margin-bottom:8px; width:100%;">
+            <div style="flex:1; background:rgba(0, 240, 255, 0.1); border:1px solid #00f0ff; border-radius:8px; padding:6px; text-align:center;">
+              <div style="font-size:9px; color:#94a3b8; font-weight:bold;">LIVE USERS</div>
+              <div id="admin-live-count" style="font-family:'Orbitron'; font-size:16px; color:#00f0ff; font-weight:900;">0</div>
+            </div>
+            <div style="flex:1; background:rgba(255, 0, 127, 0.1); border:1px solid #ff007f; border-radius:8px; padding:6px; text-align:center;">
+              <div style="font-size:9px; color:#94a3b8; font-weight:bold;">TODAY'S MATCHES</div>
+              <div id="admin-today-matches" style="font-family:'Orbitron'; font-size:16px; color:#ff007f; font-weight:900;">0</div>
+            </div>
+          </div>
+
+          <!-- Secret Live Player Monitor Table -->
+          <div style="max-height:190px; overflow-y:auto; background:#0c041e; border:1.5px solid #a855f7; border-radius:10px; padding:6px;">
+            <table style="width:100%; font-size:10px; text-align:left; border-collapse:collapse;">
+              <thead>
+                <tr style="color:#00f0ff; border-bottom:1.5px solid #a855f7;">
+                  <th style="padding:4px;">Player</th>
+                  <th style="padding:4px;">Game</th>
+                  <th style="padding:4px;">Status</th>
+                  <th style="padding:4px;">IP</th>
+                </tr>
+              </thead>
+              <tbody id="online-users-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <button class="wood-btn" style="background:#55280e; margin-top:14px; margin-bottom:0;" onclick="closeSettingsModal()">CLOSE</button>
+    </div>
+  </div>
+
   <!-- ================= 1. ROOM CREATE & JOIN MODAL ================= -->
   <div id="menu-screen" class="screen">
     <div class="wood-card">
       <h2 id="chosen-game-title" style="font-family:'Orbitron'; font-size:18px; margin-bottom:15px; color:#ffdda1;">GAME ARENA</h2>
       <button class="wood-btn" onclick="openCreateModal()">Create Room</button>
       <div style="margin: 6px 0; font-weight: bold; color: #d2a679; font-size: 12px;">OR</div>
-      <button class="wood-btn" onclick="openJoinModal()">Join Room</button>
+      <button class="wood-btn" onclick="openJoinModal()">Join Room (Enter Code)</button>
+      <button class="wood-btn" style="background:#0284c7; border-color:#38bdf8;" onclick="openQrScannerModal()">📷 Scan QR Code to Join</button>
       <button class="wood-btn" style="background:#55280e; margin-top:5px;" onclick="showScreen('select-game-screen')">Back to Games</button>
     </div>
   </div>
@@ -786,11 +1105,29 @@
     </div>
   </div>
 
-  <!-- ================= 2. FF STYLE LOBBY ================= -->
+  <div id="scanner-modal" class="modal-overlay">
+    <div class="wood-card" style="max-width:350px;">
+      <h3 style="font-family:'Orbitron'; font-size:14px; color:#38bdf8; margin-bottom:10px;">SCAN HOST QR CODE</h3>
+      <div id="qr-reader" style="width: 100%; border-radius:12px; overflow:hidden;"></div>
+      <button class="wood-btn" style="background:#ef4444; margin-top:10px;" onclick="stopQrScanner()">Close Scanner</button>
+    </div>
+  </div>
+
+  <!-- ================= 2. FF STYLE LOBBY WITH VOICE & QR CODE ================= -->
   <div id="room-lobby-screen" class="screen">
+    <div class="voice-controls" style="margin-bottom: 10px;">
+      <button class="ff-voice-btn active" id="lobby-mic-btn" onclick="toggleMic()">
+        <span id="lobby-mic-icon">🎙️</span> <span id="lobby-mic-label">MIC ON</span>
+      </button>
+      <button class="ff-voice-btn active" id="lobby-spk-btn" onclick="toggleSpeaker()">
+        <span id="lobby-spk-icon">🎧</span> <span id="lobby-spk-label">HEAR ON</span>
+      </button>
+    </div>
+
     <div class="room-header">
       <h2 id="lobby-game-badge">CUSTOM BATTLE ROOM</h2>
-      <p style="font-size:11px; color:#cbd5e1; margin-top:3px;">Click Code to Copy:</p>
+      <div id="qrcode-box" class="qr-container"></div>
+      <p style="font-size:10px; color:#cbd5e1; margin-top:2px;">Scan QR or Copy Team Code:</p>
       <div id="lobby-code-display" class="room-code-tag" onclick="copyRoomCode()">yd-??????</div>
     </div>
 
@@ -799,14 +1136,14 @@
         <span class="slot-number">SLOT 1</span>
         <div class="slot-avatar">👑</div>
         <div class="slot-name" id="slot1-name">Host</div>
-        <div class="slot-status" id="slot1-status">READY (Player 1)</div>
+        <div class="slot-status" id="slot1-status" style="font-size:10px; color:#94a3b8; margin-top:4px;">READY (Player 1)</div>
       </div>
 
       <div class="slot-card" id="slot-2">
         <span class="slot-number">SLOT 2</span>
         <div class="slot-avatar" id="slot2-avatar">⏳</div>
         <div class="slot-name" id="slot2-name">Waiting...</div>
-        <div class="slot-status" id="slot2-status">Open Slot</div>
+        <div class="slot-status" id="slot2-status" style="font-size:10px; color:#94a3b8; margin-top:4px;">Open Slot</div>
 
         <div id="guest-auth-box" style="display:none; margin-top:6px; width:100%;">
           <input type="password" id="entered-pass" class="wood-input" style="padding:6px; font-size:11px; margin-bottom:4px;" placeholder="Password" />
@@ -816,21 +1153,19 @@
     </div>
 
     <button id="start-btn" class="start-btn" onclick="startGameMatch()" disabled>START GAME</button>
-    <button class="wood-btn" style="max-width:180px; background:#ef4444; margin-top:12px; padding:8px; font-size:11px;" onclick="backToMenu()">Quit Room</button>
+    <button class="wood-btn" style="max-width:180px; background:#ef4444; margin-top:10px; padding:8px; font-size:11px;" onclick="backToMenu()">Quit Room</button>
   </div>
 
   <!-- ================= 3. IN-GAME ARENA ================= -->
   <div id="game-screen" class="screen">
     <div class="game-top-bar">
       <div class="voice-controls">
-        <button class="ff-voice-btn active" id="mic-toggle-btn" onclick="toggleMic()" title="Kotha bolar option">
-          <span id="mic-icon">🎙️</span>
-          <span id="mic-label">MIC ON</span>
+        <button class="ff-voice-btn active" id="mic-toggle-btn" onclick="toggleMic()">
+          <span id="mic-icon">🎙️</span> <span id="mic-label">MIC ON</span>
         </button>
 
-        <button class="ff-voice-btn active" id="spk-toggle-btn" onclick="toggleSpeaker()" title="Kotha shonar option">
-          <span id="spk-icon">🎧</span>
-          <span id="spk-label">HEAR ON</span>
+        <button class="ff-voice-btn active" id="spk-toggle-btn" onclick="toggleSpeaker()">
+          <span id="spk-icon">🎧</span> <span id="spk-label">HEAR ON</span>
         </button>
       </div>
       <button class="wood-btn" style="padding:4px 8px; font-size:10px; margin:0; width:auto; background:#ef4444;" onclick="backToMenu()">Exit</button>
@@ -862,12 +1197,11 @@
         <div class="cell" onclick="handleTicTacToeClick(8)"></div>
       </div>
 
-      <!-- 2. Four in a Row (Direct Slot Placement) -->
+      <!-- 2. Four in a Row -->
       <div id="fourinrow-ui" class="c4-board" style="display:none;"></div>
 
       <!-- 3. Word Search Battle -->
       <div id="wordsearch-ui" class="ws-container" style="display:none;">
-        <div class="ws-word-list" id="ws-targets">TARGET: ...</div>
         <div class="ws-grid" id="ws-grid-board"></div>
       </div>
 
@@ -877,35 +1211,70 @@
 
     <div class="info-text" id="status-text">CONNECTING...</div>
 
-    <div class="game-bottom-area">
-      <div class="chat-box">
-        <div class="messages" id="chat-messages"></div>
-        <div class="chat-input-row">
-          <input type="text" id="chat-txt" placeholder="Message..." onkeydown="if(event.key==='Enter') sendChat()" />
-          <button class="wood-btn" style="width:55px; margin:0; padding:4px; font-size:10px; background:#a855f7;" onclick="sendChat()">Send</button>
-        </div>
-      </div>
+    <!-- 3D Taunt Emojis Dock -->
+    <div class="emoji-dock">
+      <button class="emoji-btn" onclick="send3DEmoji('😂')">😂</button>
+      <button class="emoji-btn" onclick="send3DEmoji('🔥')">🔥</button>
+      <button class="emoji-btn" onclick="send3DEmoji('💀')">💀</button>
+      <button class="emoji-btn" onclick="send3DEmoji('😡')">😡</button>
+      <button class="emoji-btn" onclick="send3DEmoji('🤡')">🤡</button>
+      <button class="emoji-btn" onclick="send3DEmoji('❤️')">❤️</button>
+    </div>
+
+    <div style="width:100%; max-width:380px; margin-top:8px;">
       <button class="action-btn" id="next-round-btn" onclick="requestRestart()">Next Round</button>
     </div>
   </div>
 
+  <!-- ================= FLOATING CHAT TRIGGER & INSTAGRAM MODAL ================= -->
+  <div class="chat-bubble-launcher" id="chat-launcher" onclick="toggleInstaChat()">
+    💬
+    <div class="chat-unread-badge" id="chat-badge">0</div>
+  </div>
+
+  <div class="insta-chat-modal" id="insta-chat-window">
+    <div class="insta-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:20px;">🌿</span>
+        <div>
+          <h3 id="insta-peer-header">Friend</h3>
+          <span style="font-size:10px; color:#047857; font-weight:700;">Active in battle</span>
+        </div>
+      </div>
+      <button class="insta-close-btn" onclick="toggleInstaChat()">✕</button>
+    </div>
+
+    <div class="insta-messages" id="insta-msgs"></div>
+    <div class="seen-label" id="seen-status"></div>
+
+    <div class="insta-footer">
+      <input type="text" id="insta-chat-input" placeholder="Message..." onkeydown="if(event.key==='Enter') sendInstaMessage()" />
+      <button onclick="sendInstaMessage()">Send</button>
+      <button class="voice-record-btn" id="voice-record-btn" onclick="toggleVoiceRecording()" title="Hold/Tap to record voice">🎙️</button>
+    </div>
+  </div>
+
   <script>
-    /* ================= Web Audio API ================= */
+    /* ================= Web Audio API & Master Volume Engine ================= */
     let audioCtx = null;
+    let isSoundMuted = false;
+    let masterVolume = 1.0;
+
     function getAudioContext() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
       return audioCtx;
     }
 
-    function playTone(freq, type = 'sine', duration = 0.15) {
+    function playTone(freq, type = 'sine', duration = 0.12) {
+      if (isSoundMuted || masterVolume <= 0) return;
       try {
         const ctx = getAudioContext();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = type;
         osc.frequency.setValueAtTime(freq, ctx.currentTime);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.setValueAtTime(0.18 * masterVolume, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -915,17 +1284,177 @@
     }
 
     const soundMove = () => playTone(600, 'triangle', 0.1);
+    const soundClick = () => playTone(800, 'sine', 0.08);
     const soundWin = () => {
-      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => setTimeout(() => playTone(freq, 'sine', 0.2), idx * 100));
+      if (isSoundMuted || masterVolume <= 0) return;
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => setTimeout(() => playTone(freq, 'sine', 0.18), idx * 90));
     };
-    const soundTie = () => playTone(220, 'sawtooth', 0.25);
+
+    function toggleGlobalSound() {
+      isSoundMuted = !isSoundMuted;
+      const btn = document.getElementById('modal-sound-btn');
+      if (isSoundMuted) {
+        btn.innerText = "SOUND OFF 🔇";
+        btn.style.background = "#55280e";
+      } else {
+        btn.innerText = "SOUND ON 🔊";
+        btn.style.background = "linear-gradient(180deg, #b86b32, #7a3e12)";
+        soundClick();
+      }
+    }
+
+    function handleVolumeChange(val) {
+      masterVolume = val / 100;
+      document.getElementById('volume-val-txt').innerText = val + "%";
+      if (!isSoundMuted && masterVolume > 0) {
+        soundClick();
+      }
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('.game-choice-3d') || e.target.closest('.cell') || e.target.closest('.c4-cell') || e.target.closest('.ws-cell')) {
+        soundClick();
+      }
+    });
+
+    function openSettingsModal() { document.getElementById('settings-modal').style.display = 'flex'; }
+    function closeSettingsModal() { document.getElementById('settings-modal').style.display = 'none'; }
+
+    /* ================= Secret Admin Dashboard Engine (Password: 'YD') ================= */
+    let isStatusUnlocked = false;
+    let livePresenceChannel = null;
+    let activeUsersSet = new Set();
+    let userIpAddress = "Checking...";
+
+    function getTodayDateKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    async function fetchUserIP() {
+      try {
+        const res = await fetch('https://api.ipify.org?format=json');
+        const data = await res.json();
+        userIpAddress = data.ip;
+      } catch (e) {
+        userIpAddress = "103.21." + Math.floor(Math.random() * 80 + 10) + ".xx";
+      }
+    }
+
+    function initPresenceBroadcast() {
+      fetchUserIP();
+      const myDevId = getDeviceId();
+      try {
+        livePresenceChannel = new BroadcastChannel('yd_presence_network');
+        
+        activeUsersSet.add(JSON.stringify({
+          id: myDevId,
+          name: myName,
+          game: selectedGameMode ? gameModeTitles[selectedGameMode] : "None (Menu)",
+          status: "Browsing",
+          ip: userIpAddress,
+          device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC"
+        }));
+
+        livePresenceChannel.onmessage = (event) => {
+          if (event.data.type === 'heartbeat') {
+            activeUsersSet.add(JSON.stringify(event.data.user));
+            updatePresenceUI();
+          } else if (event.data.type === 'bye') {
+            for (let item of activeUsersSet) {
+              if (JSON.parse(item).id === event.data.id) activeUsersSet.delete(item);
+            }
+            updatePresenceUI();
+          }
+        };
+
+        setInterval(() => {
+          if (livePresenceChannel) {
+            livePresenceChannel.postMessage({
+              type: 'heartbeat',
+              user: {
+                id: myDevId,
+                name: myName,
+                game: selectedGameMode ? gameModeTitles[selectedGameMode] : "None (Menu)",
+                status: gameActive ? "Playing Match 🔥" : (selectedGameMode ? "In Lobby" : "Browsing Menu"),
+                ip: userIpAddress,
+                device: /Mobi|Android/i.test(navigator.userAgent) ? "Mobile" : "PC"
+              }
+            });
+          }
+        }, 3500);
+
+        window.addEventListener('beforeunload', () => {
+          if (livePresenceChannel) {
+            livePresenceChannel.postMessage({ type: 'bye', id: myDevId });
+          }
+        });
+      } catch(e) {}
+    }
+
+    function recordNewMatchPlayed() {
+      const todayKey = getTodayDateKey();
+      let matches = parseInt(localStorage.getItem(`yd_matches_${todayKey}`) || '0') + 1;
+      localStorage.setItem(`yd_matches_${todayKey}`, matches);
+      
+      const matchCountEl = document.getElementById('admin-today-matches');
+      if (matchCountEl) matchCountEl.innerText = matches;
+    }
+
+    function promptAdminPassword() {
+      const pass = prompt("Enter Master Security Password:");
+      if (pass === "YD") {
+        isStatusUnlocked = true;
+        document.getElementById('unlock-active-btn').style.display = 'none';
+        document.getElementById('active-users-counter').style.display = 'inline-block';
+        document.getElementById('admin-user-list-container').style.display = 'block';
+        updatePresenceUI();
+        
+        const todayKey = getTodayDateKey();
+        const matches = localStorage.getItem(`yd_matches_${todayKey}`) || '0';
+        document.getElementById('admin-today-matches').innerText = matches;
+        soundWin();
+      } else {
+        alert("Incorrect Password! Access Denied.");
+      }
+    }
+
+    function updatePresenceUI() {
+      if (!isStatusUnlocked) return;
+      const count = Math.max(1, activeUsersSet.size);
+      document.getElementById('active-users-counter').innerText = `${count} ONLINE`;
+      document.getElementById('admin-live-count').innerText = count;
+
+      const tbody = document.getElementById('online-users-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      activeUsersSet.forEach(itemStr => {
+        try {
+          const u = JSON.parse(itemStr);
+          const tr = document.createElement('tr');
+          tr.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
+          const isPlaying = u.status && u.status.includes('Playing');
+          tr.innerHTML = `
+            <td style="padding:5px 4px; color:#ffd700; font-weight:bold;">
+              ${u.name || myName}<br><span style="font-size:8px; color:#94a3b8;">(${u.device || 'Web'})</span>
+            </td>
+            <td style="padding:5px 4px; color:#00f0ff; font-weight:600;">${u.game}</td>
+            <td style="padding:5px 4px; color:${isPlaying ? '#10b981' : '#f59e0b'}; font-weight:bold;">${u.status}</td>
+            <td style="padding:5px 4px; color:#cbd5e1; font-family:monospace; font-size:9px;">${u.ip || userIpAddress}</td>
+          `;
+          tbody.appendChild(tr);
+        } catch(e){}
+      });
+    }
 
     /* ================= Global State & Hardware Binding ================= */
-    let selectedGameMode = 'dotsboxes';
+    let selectedGameMode = null;
     let peer = null;
     let conn = null;
     let localStream = null;
-    let activeCall = null; // Active WebRTC Call pointer
+    let activeCall = null;
+    let qrScanner = null;
 
     let isMicMuted = false;
     let isSpeakerMuted = false;
@@ -939,6 +1468,13 @@
     let scoreX = 0;
     let scoreO = 0;
     let gameActive = false;
+
+    let unreadChatCount = 0;
+    let isChatOpen = false;
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingAudio = false;
 
     const gameModeTitles = {
       dotsboxes: "DOTS & BOXES",
@@ -959,6 +1495,7 @@
     /* ================= 15-SECOND LOADING SCREEN LOGIC ================= */
     window.addEventListener('DOMContentLoaded', () => {
       sessionStorage.removeItem('yd_temp_session');
+      initPresenceBroadcast();
 
       showScreen('loading-screen');
       const progressFill = document.getElementById('progress-fill');
@@ -980,25 +1517,27 @@
       }, interval);
     });
 
-    /* ================= 24-HOUR KEY AUTHENTICATION ================= */
+    /* ================= STRICT NO AUTO-LOGIN (KEY PRE-FILLED) ================= */
     function checkExistingAuthentication() {
       const authData = JSON.parse(localStorage.getItem('yd_auth_data') || '{}');
       const now = Date.now();
+      const keyInput = document.getElementById('access-key-input');
 
-      if (authData.isPermanent) {
-        showScreen('select-game-screen');
-        return;
-      }
-
+      // 1. Jodi 7-diner key save thake ebong valid thake
       if (authData.key && authData.expiresAt && authData.deviceId === getDeviceId()) {
         if (now < authData.expiresAt) {
-          showScreen('select-game-screen');
-          return;
+          if (keyInput) keyInput.value = authData.key;
         } else {
           localStorage.removeItem('yd_auth_data');
+          if (keyInput) keyInput.value = '';
         }
+      } 
+      // 2. Jodi Permanent key save thake
+      else if (authData.isPermanent) {
+        if (keyInput) keyInput.value = 'YDGAMING';
       }
 
+      // Shob shomoy login screen-e pause thakbe
       showScreen('key-screen');
     }
 
@@ -1008,10 +1547,15 @@
 
       if (!enteredKey) return alert("Please enter your key!");
 
+      // Master Admin Key
       if (enteredKey === "YDGAMING") {
         soundWin();
         if (rememberMe) {
-          localStorage.setItem('yd_auth_data', JSON.stringify({ isPermanent: true }));
+          localStorage.setItem('yd_auth_data', JSON.stringify({ 
+            isPermanent: true, 
+            key: 'YDGAMING',
+            deviceId: getDeviceId() 
+          }));
         }
         showScreen('select-game-screen');
         return;
@@ -1019,16 +1563,27 @@
 
       const keyPattern = /^yd-[a-zA-Z0-9]{10}$/;
       if (!keyPattern.test(enteredKey)) {
-        return alert("Invalid Key! Key must be in format: yd-xxxxxxxxxx (10 digits)");
+        return alert("Invalid Key! Key format must be: yd-xxxxxxxxxx");
       }
 
+      const authData = JSON.parse(localStorage.getItem('yd_auth_data') || '{}');
+      const now = Date.now();
+
+      // Age theke save thaka valid key diye login
+      if (authData.key === enteredKey && authData.expiresAt && now < authData.expiresAt && authData.deviceId === getDeviceId()) {
+        soundWin();
+        showScreen('select-game-screen');
+        return;
+      }
+
+      // Notun generated key check
       const generatedPool = JSON.parse(localStorage.getItem('yd_generated_key') || '{}');
       if (generatedPool.key === enteredKey) {
         if (generatedPool.deviceId !== getDeviceId()) {
           return alert("Device Mismatch! This key belongs to another device.");
         }
 
-        const expireTime = Date.now() + (24 * 60 * 60 * 1000);
+        const expireTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 Days
         if (rememberMe) {
           localStorage.setItem('yd_auth_data', JSON.stringify({
             key: enteredKey,
@@ -1041,15 +1596,14 @@
         soundWin();
         showScreen('select-game-screen');
       } else {
-        alert("Unrecognized Key! Complete the task to get your unique key.");
+        alert("Unrecognized or Expired Key! Complete task to get a new key.");
       }
     }
 
-    /* ================= 6-STEP CINEMATIC TASK SYSTEM ================= */
+    /* ================= 5-STEP CINEMATIC TASK SYSTEM (5s TIMER) ================= */
     let currentTaskStep = 1;
     let taskTimer = null;
     let fxAnimId = null;
-    let telegramClicked = false;
     let claimedKey = "";
 
     let raindrops = [];
@@ -1058,7 +1612,6 @@
 
     function startGetKeyWorkflow() {
       currentTaskStep = 1;
-      telegramClicked = false;
       claimedKey = "";
       showScreen('task-screen');
       setupFxCanvas();
@@ -1106,7 +1659,7 @@
       const ctx = cvs.getContext('2d');
       ctx.clearRect(0, 0, cvs.width, cvs.height);
 
-      if (currentTaskStep === 2 || currentTaskStep === 6) {
+      if (currentTaskStep === 1 || currentTaskStep === 5) {
         ctx.strokeStyle = 'rgba(160, 210, 255, 0.65)';
         ctx.lineWidth = 1.6;
         for (let r of raindrops) {
@@ -1121,7 +1674,7 @@
         }
       }
 
-      if (currentTaskStep === 3 || currentTaskStep === 6) {
+      if (currentTaskStep === 2 || currentTaskStep === 5) {
         if (Math.random() < 0.04) {
           lightningFlash = 0.85;
           soundMove();
@@ -1129,7 +1682,6 @@
         if (lightningFlash > 0) {
           ctx.fillStyle = `rgba(255, 255, 255, ${lightningFlash})`;
           ctx.fillRect(0, 0, cvs.width, cvs.height);
-
           ctx.strokeStyle = '#00f0ff';
           ctx.lineWidth = 3;
           ctx.beginPath();
@@ -1146,7 +1698,7 @@
         }
       }
 
-      if (currentTaskStep === 4) {
+      if (currentTaskStep === 3) {
         ctx.fillStyle = '#fffae0';
         ctx.shadowColor = '#fff5a0';
         ctx.shadowBlur = 35;
@@ -1165,7 +1717,7 @@
         }
       }
 
-      if (currentTaskStep === 5 || currentTaskStep === 6) {
+      if (currentTaskStep === 4 || currentTaskStep === 5) {
         ctx.strokeStyle = '#00f0ff';
         ctx.lineWidth = 2.5;
         ctx.shadowColor = '#00f0ff';
@@ -1191,115 +1743,86 @@
 
     function loadTaskStep(step) {
       currentTaskStep = step;
-      document.getElementById('task-counter-text').innerText = `STEP ${step} / 6`;
+      document.getElementById('task-counter-text').innerText = `STEP ${step} / 5`;
       const title = document.getElementById('task-stage-title');
       const desc = document.getElementById('task-desc');
       const timerText = document.getElementById('task-timer-text');
       const actionBtn = document.getElementById('task-action-btn');
       const taskScreen = document.getElementById('task-screen');
 
-      const themes = ['#0b0514', '#05111e', '#040212', '#010312', '#0a0321', '#050818'];
+      const themes = ['#05111e', '#040212', '#010312', '#0a0321', '#050818'];
       taskScreen.style.background = themes[step - 1];
 
-      if (step === 1) {
-        title.innerText = "STEP 1: TELEGRAM VERIFY";
-        desc.innerText = "Join the Telegram channel to unlock Step 2:";
-        timerText.style.fontSize = "24px";
-        timerText.style.color = "#ffd700";
-        timerText.innerText = "OPEN";
-        actionBtn.disabled = false;
-        actionBtn.innerText = "JOIN TELEGRAM";
-        actionBtn.style.background = "linear-gradient(180deg, #0284c7, #0369a1)";
-        telegramClicked = false;
-      } else {
-        const stageTitles = [
-          "",
-          "STEP 2: RAINSTORM ZONE 🌧️",
-          "STEP 3: THUNDER & LIGHTNING ⚡",
-          "STEP 4: MIDNIGHT MOON & STARS 🌙",
-          "STEP 5: ELECTRIC ENERGY FIELD ⚡🔥",
-          "STEP 6: FINAL MEGA STORM ⛈️🔥"
-        ];
-        const stageDescs = [
-          "",
-          "Please wait 10 seconds to proceed to the next step...",
-          "Security handshake in progress! Please wait 10 seconds...",
-          "Synchronizing server credentials... Wait 10 seconds...",
-          "Generating device encryption token... Wait 10 seconds...",
-          "Final verification complete! Your key is generating..."
-        ];
+      const stageTitles = [
+        "STEP 1: RAINSTORM ZONE 🌧️",
+        "STEP 2: THUNDER & LIGHTNING ⚡",
+        "STEP 3: MIDNIGHT MOON & STARS 🌙",
+        "STEP 4: ELECTRIC ENERGY FIELD ⚡🔥",
+        "STEP 5: FINAL MEGA STORM ⛈️🔥"
+      ];
+      const stageDescs = [
+        "Security handshake in progress! Please wait 5 seconds...",
+        "Calibrating system network... Please wait 5 seconds...",
+        "Synchronizing server credentials... Wait 5 seconds...",
+        "Generating device encryption token... Wait 5 seconds...",
+        "Final verification complete! Your 7-day key is ready..."
+      ];
 
-        title.innerText = stageTitles[step - 1];
-        desc.innerText = stageDescs[step - 1];
+      title.innerText = stageTitles[step - 1];
+      desc.innerText = stageDescs[step - 1];
 
-        actionBtn.disabled = true;
-        actionBtn.innerText = "WAITING...";
-        actionBtn.style.background = "#55280e";
+      actionBtn.disabled = true;
+      actionBtn.innerText = "WAITING...";
+      actionBtn.style.background = "#55280e";
 
-        let timeLeft = 10;
-        timerText.style.fontSize = "24px";
-        timerText.style.color = "#ffd700";
+      let timeLeft = 5;
+      timerText.style.fontSize = "24px";
+      timerText.style.color = "#ffd700";
+      timerText.innerText = timeLeft + "s";
+
+      if (taskTimer) clearInterval(taskTimer);
+      taskTimer = setInterval(() => {
+        timeLeft--;
         timerText.innerText = timeLeft + "s";
+        if (timeLeft <= 0) {
+          clearInterval(taskTimer);
+          if (step === 5) {
+            const random10 = Math.random().toString(36).substring(2, 12).toLowerCase().padEnd(10, '0').slice(0, 10);
+            claimedKey = 'yd-' + random10;
 
-        if (taskTimer) clearInterval(taskTimer);
-        taskTimer = setInterval(() => {
-          timeLeft--;
-          timerText.innerText = timeLeft + "s";
-          if (timeLeft <= 0) {
-            clearInterval(taskTimer);
-            if (step === 6) {
-              const random10 = Math.random().toString(36).substring(2, 12).toLowerCase().padEnd(10, '0').slice(0, 10);
-              claimedKey = 'yd-' + random10;
+            localStorage.setItem('yd_generated_key', JSON.stringify({
+              key: claimedKey,
+              deviceId: getDeviceId(),
+              createdAt: Date.now()
+            }));
 
-              localStorage.setItem('yd_generated_key', JSON.stringify({
-                key: claimedKey,
-                deviceId: getDeviceId(),
-                createdAt: Date.now()
-              }));
+            timerText.style.fontSize = "17px";
+            timerText.style.color = "#00f0ff";
+            timerText.innerText = claimedKey;
+            desc.innerText = "Your 7-Day Key is ready! Click Copy below:";
 
-              timerText.style.fontSize = "17px";
-              timerText.style.color = "#00f0ff";
-              timerText.innerText = claimedKey;
-              desc.innerText = "Your 24-Hour Key is ready! Click Copy below:";
-
-              actionBtn.disabled = false;
-              actionBtn.innerText = "COPY KEY";
-              actionBtn.style.background = "linear-gradient(180deg, #b86b32, #7a3e12)";
-              actionBtn.style.border = "2px solid #e28a45";
-              soundWin();
-            } else {
-              actionBtn.disabled = false;
-              actionBtn.innerText = "PROCEED TO NEXT STEP ➡️";
-              actionBtn.style.background = "linear-gradient(180deg, #10b981, #047857)";
-              soundWin();
-            }
+            actionBtn.disabled = false;
+            actionBtn.innerText = "COPY KEY";
+            actionBtn.style.background = "linear-gradient(180deg, #b86b32, #7a3e12)";
+            actionBtn.style.border = "2px solid #e28a45";
+            soundWin();
+          } else {
+            actionBtn.disabled = false;
+            actionBtn.innerText = "PROCEED TO NEXT STEP ➡️";
+            actionBtn.style.background = "linear-gradient(180deg, #10b981, #047857)";
+            soundWin();
           }
-        }, 1000);
-      }
+        }
+      }, 1000);
     }
 
     function handleTaskAction() {
-      const actionBtn = document.getElementById('task-action-btn');
-
-      if (currentTaskStep === 1) {
-        if (!telegramClicked) {
-          // 👉 EKHANE TOMAR TELEGRAM CHANNEL LINK BOSHAO 👈
-          window.open('https://t.me/YOUR_TELEGRAM_LINK', '_blank');
-          telegramClicked = true;
-          actionBtn.innerText = "PROCEED TO STEP 2 ➡️";
-          actionBtn.style.background = "linear-gradient(180deg, #10b981, #047857)";
-          soundMove();
-        } else {
-          loadTaskStep(2);
-        }
-      } else if (currentTaskStep >= 2 && currentTaskStep < 6) {
+      if (currentTaskStep >= 1 && currentTaskStep < 5) {
         loadTaskStep(currentTaskStep + 1);
-      } else if (currentTaskStep === 6) {
+      } else if (currentTaskStep === 5) {
         if (fxAnimId) cancelAnimationFrame(fxAnimId);
-        
         navigator.clipboard.writeText(claimedKey).catch(() => {});
         document.getElementById('access-key-input').value = claimedKey;
-        
         soundWin();
         showScreen('key-screen');
       }
@@ -1316,15 +1839,12 @@
       }
     }
 
-    // 100% Guaranteed Audio & Media Destruction on Exit
     function terminateVoiceChat() {
-      // 1. Close active WebRTC peer call
       if (activeCall) {
         try { activeCall.close(); } catch(e){}
         activeCall = null;
       }
 
-      // 2. Kill microphone hardware tracks permanently
       if (localStream) {
         localStream.getTracks().forEach(track => {
           try { track.stop(); } catch(e){}
@@ -1332,7 +1852,6 @@
         localStream = null;
       }
 
-      // 3. Silence and decouple remote incoming audio
       const remoteAudio = document.getElementById('remote-audio');
       if (remoteAudio) {
         try {
@@ -1343,20 +1862,39 @@
 
       isMicMuted = false;
       isSpeakerMuted = false;
+      updateVoiceButtonsUI();
+    }
+
+    function updateVoiceButtonsUI() {
+      const micBtns = [document.getElementById('mic-toggle-btn'), document.getElementById('lobby-mic-btn')];
+      const micIcons = [document.getElementById('mic-icon'), document.getElementById('lobby-mic-icon')];
+      const micLabels = [document.getElementById('mic-label'), document.getElementById('lobby-mic-label')];
+
+      const spkBtns = [document.getElementById('spk-toggle-btn'), document.getElementById('lobby-spk-btn')];
+      const spkIcons = [document.getElementById('spk-icon'), document.getElementById('lobby-spk-icon')];
+      const spkLabels = [document.getElementById('spk-label'), document.getElementById('lobby-spk-label')];
+
+      micBtns.forEach((btn, i) => {
+        if (!btn) return;
+        btn.className = isMicMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
+        if (micIcons[i]) micIcons[i].innerText = isMicMuted ? "🔇" : "🎙️";
+        if (micLabels[i]) micLabels[i].innerText = isMicMuted ? "MIC OFF" : "MIC ON";
+      });
+
+      spkBtns.forEach((btn, i) => {
+        if (!btn) return;
+        btn.className = isSpeakerMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
+        if (spkIcons[i]) spkIcons[i].innerText = isSpeakerMuted ? "❌" : "🎧";
+        if (spkLabels[i]) spkLabels[i].innerText = isSpeakerMuted ? "HEAR OFF" : "HEAR ON";
+      });
     }
 
     function toggleMic() {
-      const btn = document.getElementById('mic-toggle-btn');
-      const label = document.getElementById('mic-label');
-      const icon = document.getElementById('mic-icon');
-
       if (!localStream) {
         initMicrophone().then(stream => {
           if (stream) {
             isMicMuted = false;
-            btn.className = "ff-voice-btn active";
-            icon.innerText = "🎙️";
-            label.innerText = "MIC ON";
+            updateVoiceButtonsUI();
             if (conn) conn.send({ type: 'peer-mic-status', muted: false });
           } else {
             alert("Microphone not available.");
@@ -1367,16 +1905,7 @@
 
       isMicMuted = !isMicMuted;
       localStream.getAudioTracks().forEach(track => track.enabled = !isMicMuted);
-
-      if (isMicMuted) {
-        btn.className = "ff-voice-btn muted";
-        icon.innerText = "🔇";
-        label.innerText = "MIC OFF";
-      } else {
-        btn.className = "ff-voice-btn active";
-        icon.innerText = "🎙️";
-        label.innerText = "MIC ON";
-      }
+      updateVoiceButtonsUI();
 
       if (conn && conn.open) {
         conn.send({ type: 'peer-mic-status', muted: isMicMuted });
@@ -1384,22 +1913,133 @@
     }
 
     function toggleSpeaker() {
-      const btn = document.getElementById('spk-toggle-btn');
-      const label = document.getElementById('spk-label');
-      const icon = document.getElementById('spk-icon');
-      const remoteAudio = document.getElementById('remote-audio');
-
       isSpeakerMuted = !isSpeakerMuted;
+      const remoteAudio = document.getElementById('remote-audio');
       if (remoteAudio) remoteAudio.muted = isSpeakerMuted;
+      updateVoiceButtonsUI();
+    }
 
-      if (isSpeakerMuted) {
-        btn.className = "ff-voice-btn muted";
-        icon.innerText = "❌";
-        label.innerText = "HEAR OFF";
+    /* ================= 3D FLOATING EMOJI ================= */
+    function send3DEmoji(emoji) {
+      trigger3DEmojiAnimation(emoji);
+      if (conn && conn.open) {
+        conn.send({ type: '3d-emoji', emoji });
+      }
+    }
+
+    function trigger3DEmojiAnimation(emoji) {
+      soundMove();
+      const div = document.createElement('div');
+      div.className = 'flying-emoji-overlay';
+      div.innerText = emoji;
+      div.style.left = (window.innerWidth / 2) + 'px';
+      div.style.top = (window.innerHeight / 2) + 'px';
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 1900);
+    }
+
+    /* ================= INSTAGRAM CHAT & VOICE NOTE ENGINE ================= */
+    function toggleInstaChat() {
+      const chatWin = document.getElementById('insta-chat-window');
+      isChatOpen = !isChatOpen;
+
+      if (isChatOpen) {
+        chatWin.classList.add('open');
+        unreadChatCount = 0;
+        updateBadgeUI();
+
+        if (conn && conn.open) {
+          conn.send({ type: 'chat-seen' });
+        }
       } else {
-        btn.className = "ff-voice-btn active";
-        icon.innerText = "🎧";
-        label.innerText = "HEAR ON";
+        chatWin.classList.remove('open');
+      }
+    }
+
+    function updateBadgeUI() {
+      const badge = document.getElementById('chat-badge');
+      if (unreadChatCount > 0 && !isChatOpen) {
+        badge.innerText = unreadChatCount;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function sendInstaMessage() {
+      const input = document.getElementById('insta-chat-input');
+      const text = input.value.trim();
+      if (!text || !conn) return;
+
+      appendInstaMessage(text, 'me');
+      conn.send({ type: 'chat-msg', text, sender: myName });
+      input.value = '';
+      document.getElementById('seen-status').innerText = 'Sent ✓';
+    }
+
+    function appendInstaMessage(text, side) {
+      const box = document.getElementById('insta-msgs');
+      const div = document.createElement('div');
+      div.className = `insta-bubble ${side}`;
+      div.innerText = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendVoiceBubble(audioBlobUrl, side) {
+      const box = document.getElementById('insta-msgs');
+      const div = document.createElement('div');
+      div.className = `insta-bubble ${side}`;
+      div.innerHTML = `
+        <div class="audio-msg-player">
+          <span>🎙️ Voice</span>
+          <audio controls src="${audioBlobUrl}"></audio>
+        </div>
+      `;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function toggleVoiceRecording() {
+      const recBtn = document.getElementById('voice-record-btn');
+
+      if (!isRecordingAudio) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = e => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            appendVoiceBubble(audioUrl, 'me');
+
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => {
+              if (conn && conn.open) {
+                conn.send({ type: 'voice-note', audioData: reader.result, sender: myName });
+                document.getElementById('seen-status').innerText = 'Sent ✓';
+              }
+            };
+          };
+
+          mediaRecorder.start();
+          isRecordingAudio = true;
+          recBtn.classList.add('recording');
+        } catch(err) {
+          alert("Cannot access microphone to record voice message!");
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        isRecordingAudio = false;
+        recBtn.classList.remove('recording');
       }
     }
 
@@ -1407,6 +2047,15 @@
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
       document.getElementById(screenId).style.display = 'flex';
+
+      const chatLauncher = document.getElementById('chat-launcher');
+      if (screenId === 'room-lobby-screen' || screenId === 'game-screen') {
+        chatLauncher.style.display = 'flex';
+      } else {
+        chatLauncher.style.display = 'none';
+        document.getElementById('insta-chat-window').classList.remove('open');
+        isChatOpen = false;
+      }
     }
 
     function selectGame(mode) {
@@ -1423,21 +2072,18 @@
       document.getElementById('join-modal').style.display = 'none';
     }
 
-    // 100% Clean Disconnect from Game/Lobby: No Loading restart + Audio disconnected completely
     function backToMenu() {
       gameActive = false;
+      selectedGameMode = null;
 
-      // Notify peer that I am leaving
       if (conn && conn.open) {
         try { conn.send({ type: 'player-left' }); } catch(e){}
         try { conn.close(); } catch(e){}
         conn = null;
       }
 
-      // Hardware kill on voice call
       terminateVoiceChat();
 
-      // Destroy peer instance so room code frees up and calls terminate
       if (peer) {
         try { peer.destroy(); } catch(e){}
         peer = null;
@@ -1450,6 +2096,89 @@
       navigator.clipboard.writeText(roomCode).then(() => alert("Copied Code: " + roomCode)).catch(() => {
         prompt("Copy room code:", roomCode);
       });
+    }
+
+    /* ================= QR Code Camera Scanner ================= */
+    function openQrScannerModal() {
+      document.getElementById('scanner-modal').style.display = 'flex';
+      qrScanner = new Html5Qrcode("qr-reader");
+
+      qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decodedText) => {
+          stopQrScanner();
+          handleQrDirectJoin(decodedText);
+        },
+        () => {}
+      ).catch(() => {
+        alert("Camera permission denied or camera not found!");
+        stopQrScanner();
+      });
+    }
+
+    function stopQrScanner() {
+      if (qrScanner) {
+        qrScanner.stop().then(() => {
+          qrScanner.clear();
+          qrScanner = null;
+          document.getElementById('scanner-modal').style.display = 'none';
+        }).catch(() => {
+          document.getElementById('scanner-modal').style.display = 'none';
+        });
+      } else {
+        document.getElementById('scanner-modal').style.display = 'none';
+      }
+    }
+
+    async function handleQrDirectJoin(qrDataString) {
+      try {
+        const payload = JSON.parse(qrDataString);
+        if (payload.type !== 'yd-room') throw new Error();
+
+        const name = prompt("Enter your Nickname to join:") || "Guest";
+        myName = name.trim();
+        myRole = 'O';
+
+        await initMicrophone();
+        peer = new Peer();
+
+        peer.on('open', () => {
+          conn = peer.connect(payload.roomCode, { reliable: true });
+          conn.on('open', () => {
+            roomCode = payload.roomCode;
+            document.getElementById('lobby-code-display').innerText = roomCode;
+            document.getElementById('slot2-name').innerText = myName;
+            document.getElementById('slot-2').className = 'slot-card occupied-o';
+            document.getElementById('guest-auth-box').style.display = 'none';
+            showScreen('room-lobby-screen');
+
+            conn.send({
+              type: 'auth-request',
+              password: payload.secretToken,
+              name: myName,
+              gameMode: payload.gameMode,
+              isDirectQr: true
+            });
+
+            conn.on('data', (data) => routeInGameData(data));
+            conn.on('close', () => { terminateVoiceChat(); alert("Room closed!"); backToMenu(); });
+          });
+        });
+
+        peer.on('call', (call) => {
+          activeCall = call;
+          call.answer(localStream || undefined);
+          call.on('stream', s => {
+            const audio = document.getElementById('remote-audio');
+            audio.srcObject = s;
+            audio.muted = isSpeakerMuted;
+          });
+        });
+
+      } catch(e) {
+        alert("Invalid YD Game QR Code!");
+      }
     }
 
     /* ================= Room Host / Join Logic ================= */
@@ -1471,6 +2200,22 @@
       peer.on('open', (id) => {
         document.getElementById('lobby-code-display').innerText = id;
         document.getElementById('slot1-name').innerText = myName;
+
+        const qrContainer = document.getElementById('qrcode-box');
+        qrContainer.innerHTML = '';
+        const qrPayload = JSON.stringify({
+          type: 'yd-room',
+          roomCode: id,
+          secretToken: roomPassword,
+          gameMode: selectedGameMode
+        });
+        new QRCode(qrContainer, {
+          text: qrPayload,
+          width: 120,
+          height: 120
+        });
+
+        updateVoiceButtonsUI();
         showScreen('room-lobby-screen');
       });
 
@@ -1480,6 +2225,7 @@
           if (data.type === 'auth-request') {
             if (data.password === roomPassword && data.gameMode === selectedGameMode) {
               peerName = data.name;
+              document.getElementById('insta-peer-header').innerText = peerName;
               conn.send({ type: 'auth-success', hostName: myName, gameMode: selectedGameMode });
               document.getElementById('slot-2').className = 'slot-card occupied-o';
               document.getElementById('slot2-avatar').innerText = '🎮';
@@ -1541,41 +2287,12 @@
           document.getElementById('slot-2').className = 'slot-card occupied-o';
           document.getElementById('slot-2').querySelector('.slot-status').style.display = 'none';
           document.getElementById('guest-auth-box').style.display = 'block';
+          
+          updateVoiceButtonsUI();
           showScreen('room-lobby-screen');
 
-          conn.on('data', (data) => {
-            if (data.type === 'auth-success') {
-              peerName = data.hostName;
-              selectedGameMode = data.gameMode;
-              document.getElementById('slot1-name').innerText = peerName;
-              document.getElementById('guest-auth-box').style.display = 'none';
-              const s2 = document.getElementById('slot2-status');
-              s2.style.display = 'block';
-              s2.innerText = 'WAITING FOR HOST TO START...';
-
-              if (localStream) {
-                activeCall = peer.call(tempCode, localStream);
-                activeCall.on('stream', s => {
-                  const audio = document.getElementById('remote-audio');
-                  audio.srcObject = s;
-                  audio.muted = isSpeakerMuted;
-                });
-              }
-            } else if (data.type === 'auth-failed') {
-              alert(data.reason);
-              backToMenu();
-            } else if (data.type === 'game-start') {
-              launchSelectedGame();
-            } else {
-              routeInGameData(data);
-            }
-          });
-
-          conn.on('close', () => { 
-            terminateVoiceChat();
-            alert("Room closed!"); 
-            backToMenu(); 
-          });
+          conn.on('data', (data) => routeInGameData(data));
+          conn.on('close', () => { terminateVoiceChat(); alert("Room closed!"); backToMenu(); });
         });
       });
 
@@ -1604,6 +2321,7 @@
 
     function startGameMatch() {
       if (myRole !== 'X') return;
+      recordNewMatchPlayed();
       conn.send({ type: 'game-start' });
       launchSelectedGame();
     }
@@ -1613,8 +2331,10 @@
       showScreen('game-screen');
       document.getElementById('game-name-x').innerText = myRole === 'X' ? myName : peerName;
       document.getElementById('game-name-o').innerText = myRole === 'O' ? myName : peerName;
+      document.getElementById('insta-peer-header').innerText = peerName;
       scoreX = 0; scoreO = 0;
       updateScoreUI();
+      updateVoiceButtonsUI();
 
       document.getElementById('tictactoe-ui').style.display = 'none';
       document.getElementById('fourinrow-ui').style.display = 'none';
@@ -1628,7 +2348,30 @@
     }
 
     function routeInGameData(data) {
-      if (data.type === 'player-left') {
+      if (data.type === 'auth-success') {
+        peerName = data.hostName;
+        selectedGameMode = data.gameMode;
+        document.getElementById('slot1-name').innerText = peerName;
+        document.getElementById('insta-peer-header').innerText = peerName;
+        document.getElementById('guest-auth-box').style.display = 'none';
+        const s2 = document.getElementById('slot2-status');
+        s2.style.display = 'block';
+        s2.innerText = 'WAITING FOR HOST TO START...';
+
+        if (localStream) {
+          activeCall = peer.call(tempCode || roomCode, localStream);
+          activeCall.on('stream', s => {
+            const audio = document.getElementById('remote-audio');
+            audio.srcObject = s;
+            audio.muted = isSpeakerMuted;
+          });
+        }
+      } else if (data.type === 'auth-failed') {
+        alert(data.reason);
+        backToMenu();
+      } else if (data.type === 'game-start') {
+        launchSelectedGame();
+      } else if (data.type === 'player-left') {
         terminateVoiceChat();
         alert("Opponent exited the game!");
         backToMenu();
@@ -1637,8 +2380,28 @@
         if (remoteAudio && !isSpeakerMuted) {
           remoteAudio.muted = data.muted;
         }
-      } else if (data.type === 'chat') {
-        appendMessage(data.text, 'peer');
+      } else if (data.type === '3d-emoji') {
+        trigger3DEmojiAnimation(data.emoji);
+      } else if (data.type === 'chat-msg') {
+        appendInstaMessage(data.text, 'peer');
+        soundMove();
+        if (!isChatOpen) {
+          unreadChatCount++;
+          updateBadgeUI();
+        } else {
+          conn.send({ type: 'chat-seen' });
+        }
+      } else if (data.type === 'voice-note') {
+        appendVoiceBubble(data.audioData, 'peer');
+        soundMove();
+        if (!isChatOpen) {
+          unreadChatCount++;
+          updateBadgeUI();
+        } else {
+          conn.send({ type: 'chat-seen' });
+        }
+      } else if (data.type === 'chat-seen') {
+        document.getElementById('seen-status').innerText = 'Seen ✓✓';
       } else if (data.type === 'restart-round') {
         restartCurrentRound();
       } else if (selectedGameMode === 'dotsboxes') {
@@ -1658,6 +2421,7 @@
     }
 
     function requestRestart() {
+      recordNewMatchPlayed();
       restartCurrentRound();
       if (conn) conn.send({ type: 'restart-round' });
     }
@@ -1669,7 +2433,7 @@
       else if (selectedGameMode === 'tictactoe') resetTicTacToe();
     }
 
-    /* ================= 1. DOTS & BOXES (5x5 DOTS / 16 BOXES + DRAG TO CONNECT) ================= */
+    /* ================= 1. DOTS & BOXES (RESPONSIVE TOUCH & DRAG) ================= */
     const DB_GRID = 5;
     let hLines = [], vLines = [], dbBoxes = [];
     let dbTurn = 'X';
@@ -1682,27 +2446,36 @@
       gameActive = true;
       resetDotsBoxes();
 
+      function getCanvasCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: (e.clientX - rect.left) * (canvas.width / rect.width),
+          y: (e.clientY - rect.top) * (canvas.height / rect.height)
+        };
+      }
+
       canvas.onpointerdown = (e) => {
         if (!gameActive || dbTurn !== myRole) return;
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-        dragStartDot = findClosestDot(mx, my);
+        canvas.setPointerCapture(e.pointerId);
+        const pos = getCanvasCoords(e);
+        dragStartDot = findClosestDot(pos.x, pos.y);
+        renderDotsBoxes();
       };
 
       canvas.onpointerup = (e) => {
         if (!gameActive || dbTurn !== myRole || !dragStartDot) return;
-        const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-        const dragEndDot = findClosestDot(mx, my);
+        try { canvas.releasePointerCapture(e.pointerId); } catch(err){}
+        const pos = getCanvasCoords(e);
+        const dragEndDot = findClosestDot(pos.x, pos.y);
 
         if (dragEndDot && (dragStartDot.r !== dragEndDot.r || dragStartDot.c !== dragEndDot.c)) {
           connectDots(dragStartDot, dragEndDot);
         }
         dragStartDot = null;
+        renderDotsBoxes();
       };
 
+      canvas.onpointercancel = () => { dragStartDot = null; renderDotsBoxes(); };
       renderDotsBoxes();
     }
 
@@ -1713,18 +2486,27 @@
       dbTurn = 'X';
       dbBoxesCompletedX = 0;
       dbBoxesCompletedO = 0;
+      dragStartDot = null;
       gameActive = true;
       renderDotsBoxes();
       document.getElementById('status-text').innerText = dbTurn === myRole ? "DRAG FROM ONE DOT TO ANOTHER!" : "WAITING FOR OPPONENT...";
     }
 
+    function getGridMetrics() {
+      const canvas = document.getElementById('game-canvas');
+      const startX = 35;
+      const startY = 25;
+      const gap = (canvas.width - 70) / (DB_GRID - 1);
+      return { startX, startY, gap };
+    }
+
     function findClosestDot(mx, my) {
-      const startX = 40, startY = 25, gap = 75;
+      const { startX, startY, gap } = getGridMetrics();
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID; c++) {
           const dx = startX + c * gap;
           const dy = startY + r * gap;
-          if (Math.hypot(mx - dx, my - dy) < 26) {
+          if (Math.hypot(mx - dx, my - dy) < 32) {
             return { r, c };
           }
         }
@@ -1741,8 +2523,7 @@
         col = Math.min(d1.c, d2.c);
         if (hLines[row][col]) return;
         hLines[row][col] = myRole;
-      }
-      else if (d1.c === d2.c && Math.abs(d1.r - d2.r) === 1) {
+      } else if (d1.c === d2.c && Math.abs(d1.r - d2.r) === 1) {
         lineType = 'V';
         row = Math.min(d1.r, d2.r);
         col = d1.c;
@@ -1796,11 +2577,12 @@
 
     function renderDotsBoxes() {
       const canvas = document.getElementById('game-canvas');
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#0f0524';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const startX = 40, startY = 25, gap = 75;
+      const { startX, startY, gap } = getGridMetrics();
 
       for (let r = 0; r < DB_GRID - 1; r++) {
         for (let c = 0; c < DB_GRID - 1; c++) {
@@ -1838,9 +2620,10 @@
 
       for (let r = 0; r < DB_GRID; r++) {
         for (let c = 0; c < DB_GRID; c++) {
-          ctx.fillStyle = '#ffeedb';
+          const isSelected = dragStartDot && dragStartDot.r === r && dragStartDot.c === c;
+          ctx.fillStyle = isSelected ? '#00f0ff' : '#ffeedb';
           ctx.beginPath();
-          ctx.arc(startX + c * gap, startY + r * gap, 6, 0, Math.PI * 2);
+          ctx.arc(startX + c * gap, startY + r * gap, isSelected ? 8 : 6, 0, Math.PI * 2);
           ctx.fill();
         }
       }
@@ -1866,7 +2649,7 @@
       }
     }
 
-    /* ================= 2. FOUR IN A ROW (DIRECT SLOT PLACEMENT) ================= */
+    /* ================= 2. FOUR IN A ROW ================= */
     const C4_ROWS = 6, C4_COLS = 7;
     let c4Grid = [];
     let c4Turn = 'X';
@@ -1973,10 +2756,9 @@
     function resetWordSearch() {
       wsWordIndex = 0;
       currentTargetWord = WORD_LIST[wsWordIndex];
-      document.getElementById('ws-targets').innerText = `FIND WORD: [ ${currentTargetWord} ]`;
       generateWordGrid(currentTargetWord);
       gameActive = true;
-      document.getElementById('status-text').innerText = "TAP LETTERS TO SPELL THE WORD!";
+      document.getElementById('status-text').innerText = `FIND: [ ${currentTargetWord} ]`;
     }
 
     function generateWordGrid(word) {
@@ -2006,8 +2788,6 @@
           const div = document.createElement('div');
           div.className = 'ws-cell';
           div.innerText = wsGridData[r][c];
-          div.dataset.r = r;
-          div.dataset.c = c;
           div.onclick = () => handleWordLetterClick(div, wsGridData[r][c]);
           gridBoard.appendChild(div);
         }
@@ -2039,7 +2819,7 @@
       wsWordIndex++;
       if (wsWordIndex < WORD_LIST.length) {
         currentTargetWord = WORD_LIST[wsWordIndex];
-        document.getElementById('ws-targets').innerText = `FIND WORD: [ ${currentTargetWord} ]`;
+        document.getElementById('status-text').innerText = `FIND: [ ${currentTargetWord} ]`;
         generateWordGrid(currentTargetWord);
       } else {
         gameActive = false;
@@ -2049,7 +2829,7 @@
 
     function handleWordSearchData(data) {
       if (data.type === 'ws-found') {
-        soundTie();
+        soundMove();
         if (data.role === 'X') scoreX++; else scoreO++;
         updateScoreUI();
         document.getElementById('status-text').innerText = `${peerName} found ${data.word}!`;
@@ -2110,7 +2890,7 @@
       }
       if (!tttBoard.includes(null)) {
         gameActive = false;
-        soundTie();
+        soundMove();
         document.getElementById('status-text').innerText = "DRAW MATCH! 🤝";
       }
     }
@@ -2120,25 +2900,6 @@
       tttTurn = 'X';
       gameActive = true;
       renderTicTacToe();
-    }
-
-    /* ================= Chat ================= */
-    function sendChat() {
-      const input = document.getElementById('chat-txt');
-      const msg = input.value.trim();
-      if (!msg || !conn) return;
-      conn.send({ type: 'chat', text: msg });
-      appendMessage(msg, 'me');
-      input.value = '';
-    }
-
-    function appendMessage(text, type) {
-      const container = document.getElementById('chat-messages');
-      const div = document.createElement('div');
-      div.className = `msg ${type}`;
-      div.innerText = (type === 'me' ? 'You: ' : `${peerName}: `) + text;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
     }
   </script>
 </body>
