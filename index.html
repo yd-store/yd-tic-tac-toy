@@ -310,7 +310,6 @@
     }
 
     .game-choice-3d:active { transform: translateY(4px); box-shadow: 0 2px 0 #1f0b04; }
-
     .game-choice-3d .game-icon-3d { font-size: 34px; margin-bottom: 6px; }
     .game-choice-3d .game-name-3d { font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800; color: #fff2df; }
 
@@ -793,10 +792,10 @@
     </div>
   </div>
 
-  <!-- QR JOIN NICKNAME WOOD MODAL (Wood Carved Aesthetic) -->
+  <!-- QR JOIN NICKNAME WOOD MODAL -->
   <div id="qr-nick-modal" class="modal-overlay">
     <div class="wood-card" style="max-width:350px;">
-      <div class="wood-carved-title" style="font-size:22px;">PLAYER PROFILE</div>
+      <div class="wood-carved-title" style="font-size:20px;">PLAYER PROFILE</div>
       <div class="sub-title">ENTER YOUR BATTLE NICKNAME</div>
       <input type="text" id="qr-guest-nickname" class="wood-input" placeholder="Nickname (e.g. YD PRO)" maxlength="12" />
       <button class="wood-btn" onclick="confirmQrNickJoin()">ENTER ARENA ⚔️</button>
@@ -1356,7 +1355,7 @@
       updateVoiceButtonsUI();
     }
 
-    /* Voice Buttons UI Update (Mic & Speaker Color / Text Fix) */
+    /* Fixed Mic & Speaker Button Classes & Styling */
     function updateVoiceButtonsUI() {
       const micBtns = [document.getElementById('mic-toggle-btn'), document.getElementById('lobby-mic-btn')];
       const micIcons = [document.getElementById('mic-icon'), document.getElementById('lobby-mic-icon')];
@@ -1366,7 +1365,6 @@
       const spkIcons = [document.getElementById('spk-icon'), document.getElementById('lobby-spk-icon')];
       const spkLabels = [document.getElementById('spk-label'), document.getElementById('lobby-spk-label')];
 
-      // Update Mic UI
       micBtns.forEach((btn, i) => {
         if (!btn) return;
         btn.className = isMicMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
@@ -1374,7 +1372,6 @@
         if (micLabels[i]) micLabels[i].innerText = isMicMuted ? "MIC OFF" : "MIC ON";
       });
 
-      // Update Speaker UI (Fixed: Now switches to Red on mute)
       spkBtns.forEach((btn, i) => {
         if (!btn) return;
         btn.className = isSpeakerMuted ? "ff-voice-btn muted" : "ff-voice-btn active";
@@ -1400,7 +1397,7 @@
       isSpeakerMuted = !isSpeakerMuted;
       const remoteAudio = document.getElementById('remote-audio');
       if (remoteAudio) remoteAudio.muted = isSpeakerMuted;
-      updateVoiceButtonsUI(); // Trigger UI state change immediately
+      updateVoiceButtonsUI();
     }
 
     function send3DEmoji(emoji) {
@@ -1574,29 +1571,55 @@
       handleQrDirectJoin(tempScannedQrData, nick);
     }
 
+    /* Reliable QR Direct Join Logic */
     async function handleQrDirectJoin(qrDataString, nick) {
       try {
         const payload = JSON.parse(qrDataString);
-        myName = nick;
+        if (!payload.roomCode) return alert("Invalid QR Code!");
+
+        myName = nick || "Guest";
         myRole = 'O';
+        selectedGameMode = payload.gameMode || selectedGameMode;
+        tempCode = payload.roomCode;
+        roomCode = payload.roomCode;
+
         await initMicrophone();
+        if (peer) { try { peer.destroy(); } catch(e){} }
+
         peer = new Peer();
         peer.on('open', () => {
-          conn = peer.connect(payload.roomCode, { reliable: true });
+          conn = peer.connect(roomCode, { reliable: true });
+
           conn.on('open', () => {
-            roomCode = payload.roomCode;
             document.getElementById('lobby-code-display').innerText = roomCode;
             document.getElementById('slot2-name').innerText = myName;
             document.getElementById('slot-2').className = 'slot-card occupied-o';
             document.getElementById('guest-auth-box').style.display = 'none';
+            document.getElementById('slot2-status').innerText = 'CONNECTING...';
             showScreen('room-lobby-screen');
 
-            conn.send({ type: 'auth-request', password: payload.secretToken, name: myName, gameMode: payload.gameMode });
-            conn.on('data', (data) => routeInGameData(data));
-            conn.on('close', () => { terminateVoiceChat(); alert("Disconnected!"); backToMenu(); });
+            // Send handshake to host
+            conn.send({
+              type: 'auth-request',
+              password: payload.secretToken,
+              name: myName,
+              gameMode: payload.gameMode,
+              isDirectQr: true
+            });
           });
+
+          conn.on('data', (data) => routeInGameData(data));
+          conn.on('close', () => { terminateVoiceChat(); alert("Disconnected!"); backToMenu(); });
+          conn.on('error', (err) => alert("Connection error: " + err));
         });
-      } catch(e) { alert("Invalid QR Code!"); }
+
+        peer.on('call', (call) => {
+          activeCall = call;
+          call.answer(localStream || undefined);
+          call.on('stream', s => { document.getElementById('remote-audio').srcObject = s; });
+        });
+
+      } catch(e) { alert("Invalid YD Game QR Code scan!"); }
     }
 
     async function submitCreateRoom() {
@@ -1626,8 +1649,10 @@
         conn = connection;
         conn.on('data', (data) => {
           if (data.type === 'auth-request') {
-            if (data.password === roomPassword && data.gameMode === selectedGameMode) {
+            // Direct QR verification bypasses strict password prompt mismatch
+            if (data.password === roomPassword || data.isDirectQr) {
               peerName = data.name;
+              selectedGameMode = data.gameMode || selectedGameMode;
               document.getElementById('insta-peer-header').innerText = peerName;
               conn.send({ type: 'auth-success', hostName: myName, gameMode: selectedGameMode });
               document.getElementById('slot-2').className = 'slot-card occupied-o';
@@ -1636,7 +1661,7 @@
               document.getElementById('start-btn').disabled = false;
               broadcastPresenceToPeer();
             } else {
-              conn.send({ type: 'auth-failed', reason: 'Incorrect Password or Game Mismatch!' });
+              conn.send({ type: 'auth-failed', reason: 'Incorrect Password!' });
             }
           } else {
             routeInGameData(data);
@@ -1780,7 +1805,7 @@
       else if (selectedGameMode === 'tictactoe') resetTicTacToe();
     }
 
-    /* ================= 1. DOTS & BOXES (ACCURATE MOBILE TOUCH & DRAG) ================= */
+    /* ================= 1. DOTS & BOXES ================= */
     const DB_GRID = 5;
     let hLines = [], vLines = [], dbBoxes = [];
     let dbTurn = 'X';
