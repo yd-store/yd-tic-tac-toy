@@ -1,20 +1,17 @@
 {
   "name": "YD GAME HUB",
   "short_name": "YD GAME",
+  "description": "YD GAME HUB - 3D 1v1 Battle Arena",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#060214",
   "theme_color": "#060214",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192/060214/00f0ff?text=YD",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://via.placeholder.com/512/060214/00f0ff?text=YD",
+      "src": "/icon.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
